@@ -1,0 +1,37 @@
+[package]
+name = "ast"
+version = "2.7.0"
+edition.workspace = true
+authors.workspace = true
+
+[features]
+# Performance ablation: use the equivalent per-block usage census in temp inline.
+reference-temp-census = []
+# Opt-in de-inline rejection telemetry (P11-C). OFF by default: every trace site
+# compiles to nothing, so release output and the hot path are byte-for-byte
+# unaffected. Build with `--features ast/deinline_trace` to print, per de-inline
+# target candidate, which gate refused it (TargetStillReferenced / Variadic /
+# UnsafeBody / UnsupportedReturnShape / EmptyPattern / LowAnchorScore).
+deinline_trace = []
+# Opt-in byte-copy attribution through the existing per-phase telemetry. The
+# default build retains derived Clone and contains no counter calls.
+byte-storage-trace = []
+# Diagnostic-only TLS allocation attribution. No allocator hooks in default builds.
+phase-allocation-trace = []
+
+[dependencies]
+derive_more = "0.99.17"
+enum-as-inner = "0.5.1"
+itertools = "0.10.5"
+enum_dispatch = "0.3.8"
+by_address = "1.1.0"
+rustc-hash = "1.1.0"
+indexmap = "1.9.1"
+petgraph = { git = "https://github.com/jujhar16/petgraph.git", branch = "ensure_len_resize_with" }
+array_tool = "1.0.3"
+itoa = "1.0.4"
+ryu = "1.0.11"
+nohash-hasher = "0.2.0"
+triomphe = "0.1.8"
+parking_lot = "0.12.1"
+serde = { version = "1", features = ["derive", "rc"] }
