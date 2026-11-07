@@ -1,0 +1,1918 @@
+{
+ "provenance": {
+  "compiler_commit": "c2ec0d4e5ca50796ba174a7565298f59aa572268",
+  "lifter_sha256": "79a110d115fb87eaca87fbc6cfd27c5aa9543ad47a388c1a49197a2e2548cf44",
+  "review": "V2.8 native argument sites: add one reviewed fixture; all 282 existing rows and ten refusal records are unchanged. Comparison rules remain unchanged.",
+  "evidence": "docs/v2_8/public_proof_recovery.md; /workspace/work/v28/public-proof/result-reuse-79a1-fixture-review/baseline-addition-recommendation.json"
+ },
+ "summary": {
+  "inputs": 283,
+  "protos": 1720,
+  "exact": 850,
+  "equiv": 333,
+  "differ": 480,
+  "missing": 40,
+  "extra": 17,
+  "equiv_ratio": 0.68779
+ },
+ "files": [
+  {
+   "file": "alias_iterators",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "arith_moved_past_captured_store",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "arithmetic_region_captured_operand",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "binary_snapshot_timing",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 10
+  },
+  {
+   "file": "branch_tuple_helper",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 6
+  },
+  {
+   "file": "builtin_alias_across_blocks",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "builtin_argument_zero_results",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "builtin_last_argument_kinds",
+   "status": "ok",
+   "nonequiv": 8,
+   "protos": 12
+  },
+  {
+   "file": "call_argument_width",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "call_before_capture_read",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 6
+  },
+  {
+   "file": "call_moved_past_captured_store",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "callback_written_capture",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 4
+  },
+  {
+   "file": "capture_coalesced_into_closure_target",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 9
+  },
+  {
+   "file": "capture_written_after_yield",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 5
+  },
+  {
+   "file": "captured_break_continue",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "captured_cell_block_param_rename",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 12
+  },
+  {
+   "file": "captured_cell_iterator",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 5
+  },
+  {
+   "file": "captured_connection_after_branch",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 6
+  },
+  {
+   "file": "captured_copy_into_plain_local",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 7
+  },
+  {
+   "file": "captured_handle_from_merge",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 6
+  },
+  {
+   "file": "captured_parameter_classes_interfere",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 6
+  },
+  {
+   "file": "captured_result",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "captured_swap_before_generic_loop",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 10
+  },
+  {
+   "file": "captured_swap_cell_phi",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 6
+  },
+  {
+   "file": "cell_copy_dead_update",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 2
+  },
+  {
+   "file": "cell_copy_reassigned_in_loop",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "cell_copy_unwritten_or_forwarded",
+   "status": "ok",
+   "nonequiv": 13,
+   "protos": 8
+  },
+  {
+   "file": "cell_joins_its_register_phi",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 7
+  },
+  {
+   "file": "cell_phi_other_variable",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 8
+  },
+  {
+   "file": "cell_phi_other_variable_folded",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 8
+  },
+  {
+   "file": "cell_snapshot_after_trivial_phi",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 5
+  },
+  {
+   "file": "cell_swap_beside_copy",
+   "status": "ok",
+   "nonequiv": 7,
+   "protos": 8
+  },
+  {
+   "file": "cell_written_in_loop_read_after",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 7
+  },
+  {
+   "file": "closure_capturing_a_folded_constant",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 18
+  },
+  {
+   "file": "closure_capturing_a_folded_constant_in_a_chunk_loop",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "closure_capturing_a_loop_local_function",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 5
+  },
+  {
+   "file": "closure_constant_cached_by_another_copy",
+   "status": "ok",
+   "nonequiv": 7,
+   "protos": 11
+  },
+  {
+   "file": "closure_identity_across_inlined_copies",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 13
+  },
+  {
+   "file": "closure_in_store_key_captures",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "codefined_results_kept_apart",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "codefined_results_kept_apart_plain",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 8
+  },
+  {
+   "file": "codefined_results_loop_swap",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "collapsed_conditional_stays_ssa",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 5
+  },
+  {
+   "file": "comparison_inside_comparison",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "compound_local_base",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "conditional_capture_loop_swap",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "conditional_value_before_short_circuit",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "conditional_value_before_store_address",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "conditional_value_before_upvalue_callee",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 7
+  },
+  {
+   "file": "conditional_write_of_a_captured_local",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 9
+  },
+  {
+   "file": "connection_stored_only_where_written",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 7
+  },
+  {
+   "file": "constructor_key_error_after_branch_call",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "constructor_split_keeps_list_slots",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "copied_tail_keeps_cell_per_iteration",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 3
+  },
+  {
+   "file": "cps_copy_without_return",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "dead_const_tables",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "debug_info_frame_at_call_site",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "debug_info_through_local_function",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "declared_select_helper",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "declared_select_prefix",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "deep_expression_vector_constant",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "deinline_absorb_keeps_source_handles",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 8
+  },
+  {
+   "file": "deinline_arithmetic_select_beside_its_evidence_twin",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "deinline_closure_factories",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 27
+  },
+  {
+   "file": "deinline_constant_fold_equations",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 19,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "f65d2ba1c1636d070b36185c1a54db5e41e0129296326bde6bdb54ee4b0f6f55",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 32: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "0a06311fda42dfb4defbe3cb3e91146e86c1d0fddd3bd174c3309a2b17b21e54"
+  },
+  {
+   "file": "deinline_constant_folded_helper_copies",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 14,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "355d84ae98357cdd6effaf3632cb8ff807f54c12f66818c1395a5c59bcf25076",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 32: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "2caef38f058a765878afeae403370581dfba45debd3e6c45ddf8c9c1f4a718f9"
+  },
+  {
+   "file": "deinline_constant_parameter_still_captured",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 6
+  },
+  {
+   "file": "deinline_copy_capture_rebound",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "deinline_discarded_result",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 7
+  },
+  {
+   "file": "deinline_earlier_body_and_extents",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 11
+  },
+  {
+   "file": "deinline_error_level_helper_rebuilt",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 12
+  },
+  {
+   "file": "deinline_free_cell_read_late",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "deinline_fresh_closure_capturing_a_constant",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 15
+  },
+  {
+   "file": "deinline_helper_kept_beside_its_named_store",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 7
+  },
+  {
+   "file": "deinline_hosted_values",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 13
+  },
+  {
+   "file": "deinline_late_register_read_of_a_cell",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 6
+  },
+  {
+   "file": "deinline_left_out_argument_after_spreading_call",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 6,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "3833a52e9128323c57b10d74476ff4e8e40a6dce9ae5b89d95128c0eb97cfcc5",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 32: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "741333b84d22675e73b4fa141d072108c10e9de2013c574704e940b623ee4716"
+  },
+  {
+   "file": "deinline_line_evidence_admits_small_helpers",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 22
+  },
+  {
+   "file": "deinline_line_evidence_expression_helpers",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 10
+  },
+  {
+   "file": "deinline_merged_result_branches",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 10
+  },
+  {
+   "file": "deinline_method_receiver_read_late",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "deinline_ordered_leading_reads",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 8
+  },
+  {
+   "file": "deinline_orphan_function",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 6
+  },
+  {
+   "file": "deinline_result_stored_into_its_argument",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 11
+  },
+  {
+   "file": "deinline_returned_cell",
+   "status": "ok",
+   "nonequiv": 7,
+   "protos": 15
+  },
+  {
+   "file": "deinline_returns_distributed_and_short_circuit",
+   "status": "ok",
+   "nonequiv": 9,
+   "protos": 11
+  },
+  {
+   "file": "deinline_specialization_outside_copies",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 10
+  },
+  {
+   "file": "deinline_specialized_copies",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 9
+  },
+  {
+   "file": "deinline_store_rebuilt_below_its_caller_copy",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 11
+  },
+  {
+   "file": "deinline_trailing_false_flag_left_out",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 9,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "ef52f68a9e8459b9abdc66badc20368830a03b982089c5cd3eff0d71ae693fff",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 32: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "a49d569f6fafc53cd62a8aa4d3b15a17dff97318a96def64697c98a41115b944"
+  },
+  {
+   "file": "deinline_tuple_result_shared_closure",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 8
+  },
+  {
+   "file": "deinline_tuple_returns",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 14
+  },
+  {
+   "file": "deinline_value_moves_into_its_reader",
+   "status": "ok",
+   "nonequiv": 8,
+   "protos": 9
+  },
+  {
+   "file": "deinline_value_sites_without_prefix_limit",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 11
+  },
+  {
+   "file": "deinline_vector_arguments",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 6
+  },
+  {
+   "file": "deinline_written_parameter_alias",
+   "status": "ok",
+   "nonequiv": 8,
+   "protos": 8
+  },
+  {
+   "file": "deinline_written_parameter_live_outside",
+   "status": "ok",
+   "nonequiv": 8,
+   "protos": 9
+  },
+  {
+   "file": "drained_field_positional_slot",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "duplicate_local_multi_assign",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "duptable_earlier_gc_placeholder",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "duptable_gc_placeholder",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "dynamic_environment",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "embedded_field_read_before_prefix",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "embedded_global_read_before_prefix",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "embedded_helper_value",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "embedded_prefix_order",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 6
+  },
+  {
+   "file": "embedded_value_multi_target",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "embedded_value_multi_target_helper",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "event_parameter_roles",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 7
+  },
+  {
+   "file": "exact_fraction_constants",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 3
+  },
+  {
+   "file": "fall_off_helper_arity",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "fastcall_alias_snapshot",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 6
+  },
+  {
+   "file": "fastcall_argument_order",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 2,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "38fef8990cc59a9419bc6ed2405d6d298026715829f41b95291060f132a188e1",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 1, pc 79: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "cd56cc2777fc15b97e248fe84b31941e420a91c4056a75f3e286e971f05f6998"
+  },
+  {
+   "file": "fastcall_captured_register_read",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "fastcall_multret_argument_copied",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 3,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "914231d8453ab716e7052ecb6b3422aa8ecdeff378457328cc43f203f0a6a9c6",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 1, pc 14: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "a459120e81686832257af936bd00c83076ae852f9bb4e76dc394a220a4e60d98"
+  },
+  {
+   "file": "first_read_argument_hoist",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 7
+  },
+  {
+   "file": "first_read_captured_operand",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "first_read_captured_statement",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "first_read_captured_store",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "first_read_statement_hoist",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 7
+  },
+  {
+   "file": "flattened_do_blocks_register_limit",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "folded_constant_argument",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 6
+  },
+  {
+   "file": "format_call_statement",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "fractions_over_source_denominators",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 3,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "fcec229cc5bec6b98b678a8a64abb6279ad9e3cb1973579521e4b87459d30ad7",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 14: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "951a192da2aa13ecffb5066d06dc72797794490bfe983fa0b6211c1904363be1"
+  },
+  {
+   "file": "fresh_closure_capture_read_global",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "function_from_debug_info_writes_cell",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "generic_break_found",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "generic_for_iterates_local_call",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "generic_loop_body_only_breaks",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 5
+  },
+  {
+   "file": "generic_loop_global_generator",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 1
+  },
+  {
+   "file": "generic_loop_result_keeps_outer_value",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "import_alias_error_timing",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "import_alias_field_reassigned",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "import_alias_script_globals",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 6
+  },
+  {
+   "file": "import_callee_alias",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "import_lookup_may_raise",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "incoming_operand_read_timing",
+   "status": "ok",
+   "nonequiv": 15,
+   "protos": 45
+  },
+  {
+   "file": "inferred_call_comment_on_its_first_line",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 6
+  },
+  {
+   "file": "inferred_call_comments",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 9
+  },
+  {
+   "file": "inner_loop_continues_outer",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "interpolated_string_in_last_position",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "iter_metamethod_order",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 5
+  },
+  {
+   "file": "late_control_flow_shapes",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 7
+  },
+  {
+   "file": "late_register_read_captured",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "library_fetch_with_replaced_library",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "live_self_updates",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 8
+  },
+  {
+   "file": "local_tuple_helper",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 10
+  },
+  {
+   "file": "locals_past_the_limit_take_if_expressions",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 11
+  },
+  {
+   "file": "long_accumulation_chain",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "long_bracket_prose_only",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 1
+  },
+  {
+   "file": "long_condition_wrapping",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "loop_after_breaking_for",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "loop_breaking_at_once_after_a_swap",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 4
+  },
+  {
+   "file": "loop_capture_post_loop_swap",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "loop_capture_post_loop_write",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 7
+  },
+  {
+   "file": "loop_carried_cell_declared_before_loop",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 21,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "3b223380539d4a16e1c334efb7ce5042e0e1ed52200b63d4fb6c29380708dd02",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 10: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "5d3ebb2ed94243fdf94bbe27fe610b9b4f7a004db1e7f315b20348e36abaab26"
+  },
+  {
+   "file": "loop_exit_after_continue_and_break",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 9
+  },
+  {
+   "file": "loop_result_exports",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 9
+  },
+  {
+   "file": "loop_return_flag",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "loop_return_skips_loop_tail",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 4
+  },
+  {
+   "file": "loop_return_value",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 8
+  },
+  {
+   "file": "loop_shapes",
+   "status": "ok",
+   "nonequiv": 8,
+   "protos": 13
+  },
+  {
+   "file": "loop_shared_return",
+   "status": "ok",
+   "nonequiv": 9,
+   "protos": 10
+  },
+  {
+   "file": "loop_swap_with_later_capture",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "loop_swaps_of_captured_locals",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 6
+  },
+  {
+   "file": "multi_line_elements_one_per_line",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "multiline_string_keys",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "naming_branch_consensus",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 9
+  },
+  {
+   "file": "naming_builtin_spellings_never_capture",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 4,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "a54a0cc36afb4196046ba58c3816e6f39be45145ee168e893c5e2066eab3f50f",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 0, pc 37: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "91c5880a854b117ffa2d29ee5ba85f4743be6d7a1f949d6aadc558a8ffe7559d"
+  },
+  {
+   "file": "naming_counter_compaction_respects_captures",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 7
+  },
+  {
+   "file": "naming_irregular_collections",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 1
+  },
+  {
+   "file": "naming_literal_object_name",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "naming_mixed_screaming_and_builtin_plurals",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 5
+  },
+  {
+   "file": "naming_sequential_bindings_stay_distinct",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "naming_suffixes_from_evidence_stay",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 7
+  },
+  {
+   "file": "naming_taken_name_falls_back",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "naming_unused_bindings_keep_their_reads",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 6
+  },
+  {
+   "file": "nan_sign_preserved",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 1
+  },
+  {
+   "file": "native_builtin_environment",
+   "status": "ok",
+   "nonequiv": 5,
+   "protos": 6
+  },
+  {
+   "file": "native_builtin_literal_arguments",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 9
+  },
+  {
+   "file": "native_builtin_site_arguments",
+   "status": "ok",
+   "nonequiv": 9,
+   "protos": 15
+  },
+  {
+   "file": "native_function_attribute",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "native_module_hot_comment",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "nested_calls_after_blocks",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 4
+  },
+  {
+   "file": "nested_capture_argument",
+   "status": "ok",
+   "nonequiv": 6,
+   "protos": 7
+  },
+  {
+   "file": "nested_exports",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "nested_loop_exits_parent",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 1
+  },
+  {
+   "file": "nested_rejected_format_calls",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "next_call_generic_for",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 9
+  },
+  {
+   "file": "numeric_for_init_reads_cell",
+   "status": "expected_refusal",
+   "nonequiv": 0,
+   "protos": 5,
+   "refusal": {
+    "reason": "cannot preserve open call results across an operation without a tuple-order proof",
+    "source_sha256": "0719fd6ee510ee484bbd43db5fd20cede31ae83445d9da6e8c15e841693f6a8f",
+    "profile": {
+     "opt": 2,
+     "debug": 1,
+     "bytecode_version": 9,
+     "compiler_flags": [
+      "--fflags=false",
+      "--vector-lib=Vector3",
+      "--vector-ctor=new",
+      "--vector-type=Vector3"
+     ],
+     "lifter_args": []
+    },
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "prototype 3, pc 39: cannot preserve open call results across an operation without a tuple-order proof\n"
+   },
+   "input_sha256": "f0f98007ee055ba2bbad696c77f912e3b239c86fd79dee024b55552705c338e5"
+  },
+  {
+   "file": "numeric_loop_return",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 13
+  },
+  {
+   "file": "numeric_loops_sharing_registers",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "one_variable_generic_loops_register_limit",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "outer_local_helpers",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 8
+  },
+  {
+   "file": "parallel_copy_cycle",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "parameter_hole_multret",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "paren_call_truncates_multret",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "paren_statement_after_index_and_unary",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 6
+  },
+  {
+   "file": "promise_advancers_capture_their_handlers",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 10
+  },
+  {
+   "file": "proven_return_types",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 13
+  },
+  {
+   "file": "readable_captured_choice",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "readable_if_final_names",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "readable_if_values",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 7
+  },
+  {
+   "file": "rebuilt_call_keeps_literal_sharing",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 10
+  },
+  {
+   "file": "rebuilt_call_result_names",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "recursive_local_function_in_loop",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 7
+  },
+  {
+   "file": "recursive_local_function_in_value_branch",
+   "status": "ok",
+   "nonequiv": 7,
+   "protos": 12
+  },
+  {
+   "file": "register_store_target_after_value_call",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "repeated_select_operand",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "report_nested_numeric_accumulate",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "report_repeat_break_in_numeric_for",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "reroll_within_register_limit",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "reserved_list_slots_keep_keyed_entries",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "returned_local_helper",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 10
+  },
+  {
+   "file": "returned_parameter_helper",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "rewritten_helper_arity",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "script_index_past_captured_read",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "services_table_under_pressure",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "short_tables_one_line",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "signed_zero_key_after_nil_slot",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 8
+  },
+  {
+   "file": "signed_zero_key_kept_by_moved_entry",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "signed_zero_operands",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "signed_zero_table_keys",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 3
+  },
+  {
+   "file": "snapshot_compared_after_callback",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 7
+  },
+  {
+   "file": "snapshot_receiver_and_constructor_key",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 6
+  },
+  {
+   "file": "snapshot_store_address_after_callback",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 7
+  },
+  {
+   "file": "source_spacing",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 4
+  },
+  {
+   "file": "store_address_read_at_store",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 8
+  },
+  {
+   "file": "store_site_helper_call",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 7
+  },
+  {
+   "file": "suffix_numeric",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "swap_after_breaking_for",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "swap_around_generic_loop",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "swap_of_two_captured_cells",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 11
+  },
+  {
+   "file": "table_array_call_truncation",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "table_array_dynamic_key",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 6
+  },
+  {
+   "file": "table_array_mixed_keys",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_constructor_snapshot_before_call",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_duplicate_nil_capacity",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "table_duplicate_numeric_capacity",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_duplicate_value_capacity",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_empty_growth",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "table_empty_observers",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "table_helper_new_template",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "table_helper_template_new",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "table_large_allocation",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_layout_keeps_pairs_order",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 6
+  },
+  {
+   "file": "table_mixed_allocation_growth",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_newtable_growth",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "table_newtable_move_nil",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_newtable_replace_nil",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "table_newtable_replace_with_nil",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "table_numeric_hash_layout",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "table_open_list_captured_key",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "table_open_list_growth",
+   "status": "ok",
+   "nonequiv": 8,
+   "protos": 16
+  },
+  {
+   "file": "table_open_list_incoming_key_timing",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 9
+  },
+  {
+   "file": "table_open_list_key_errors",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 5
+  },
+  {
+   "file": "table_open_list_late_key_read",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 5
+  },
+  {
+   "file": "table_open_list_owned_key_timing",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 14
+  },
+  {
+   "file": "table_open_list_positional_prefix",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 7
+  },
+  {
+   "file": "table_open_list_split_prefix",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 6
+  },
+  {
+   "file": "table_partial_array_keys",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "table_runtime_nil_layout",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 4
+  },
+  {
+   "file": "table_store_after_appended_call",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "table_template_runtime_nil_growth",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 3
+  },
+  {
+   "file": "table_unobserved_placeholder",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 9
+  },
+  {
+   "file": "template_repeated_key",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  },
+  {
+   "file": "tuple_store_targets",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 7
+  },
+  {
+   "file": "typed_params",
+   "status": "ok",
+   "nonequiv": 3,
+   "protos": 5
+  },
+  {
+   "file": "ui_setlist_order",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 10
+  },
+  {
+   "file": "unfoldable_temporaries_over_local_limit",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 3
+  },
+  {
+   "file": "untruncated_arguments",
+   "status": "ok",
+   "nonequiv": 2,
+   "protos": 6
+  },
+  {
+   "file": "unused_local_vs_global_underscore",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "upvalue_operand_read_before_call",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 7
+  },
+  {
+   "file": "value_capture_into_its_own_target",
+   "status": "ok",
+   "nonequiv": 9,
+   "protos": 28
+  },
+  {
+   "file": "value_capture_of_cell_copy",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 4
+  },
+  {
+   "file": "value_capture_through_call_argument",
+   "status": "ok",
+   "nonequiv": 4,
+   "protos": 12
+  },
+  {
+   "file": "value_capture_written_after_closure",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 8
+  },
+  {
+   "file": "vector_constant_full_upvalues",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 5
+  },
+  {
+   "file": "vector_nan_sign",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "vector_single_constructor_snapshot",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 1
+  },
+  {
+   "file": "while_header_opens_for",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 2
+  },
+  {
+   "file": "while_inlined_condition",
+   "status": "ok",
+   "nonequiv": 1,
+   "protos": 4
+  },
+  {
+   "file": "zero_trip_suffix",
+   "status": "ok",
+   "nonequiv": 0,
+   "protos": 2
+  }
+ ]
+}

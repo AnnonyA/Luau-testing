@@ -1,0 +1,130 @@
+# Các hướng tối ưu hiệu năng đã thử nhưng không đáng làm
+
+Danh sách gộp mọi hướng tối ưu đã **đo** và bị loại, từ 2026-06 đến 2026-10-04, kèm con số
+và nguồn; bổ sung thí nghiệm cloud ngày 2026-10-27. Mục đích là không đề xuất và đo lại cùng một ý tưởng ở các vòng sau.
+
+Quy tắc:
+
+- Chỉ đề xuất lại một hướng ở đây khi có bằng chứng **mới**, tức là profile cho thấy chi
+  phí đã dịch chuyển so với lúc đo.
+- Khi một hướng mới bị loại, thêm một dòng kèm con số đo và nguồn.
+- Mọi số liệu là đo, không phải ước lượng, trừ khi ghi rõ.
+
+## Bối cảnh: hồ sơ chi phí phẳng
+
+Đo trên corpus Roblox (xem [v3_engine.md](../v3_engine.md) §2–§3 và §7):
+
+- Không có điểm nóng: pha SSA theo hàm chiếm ~40–45%, ~40–50 pass cấp chunk chiếm ~55–60%.
+  Không pha nào vượt ~12%.
+- Một lượt duyệt toàn cây tốn ~30 ms trên corpus (~6 ns/nút), đã sát giới hạn của cây
+  `Box` + visitor. Phần chunk xấp xỉ bằng số lượt duyệt × 30 ms.
+- ~17% thời gian pass chunk là lượt chạy không đổi gì. Phần lớn chi phí đó là census
+  toàn cây trước khi biết không có gì để làm, nên không gác rẻ được.
+- Chi phí nằm ở **lượng việc** của thuật toán, không ở cấu trúc dữ liệu. Vì vậy các thay
+  đổi biểu diễn bên dưới đều chỉ cho vài phần trăm hoặc không gì cả.
+
+## 1. Biểu diễn dữ liệu và bộ nhớ
+
+| Hướng | Kết quả đo | Nguồn |
+|---|---|---|
+| Locality của AST: sao chép cây cho liền mạch, IR dạng arena | 0% | [v3_engine.md](../v3_engine.md) §3 |
+| Arena bump cho mỗi lần decompile (giải phóng là no-op) | 3–7%; rủi ro đối tượng thoát arena (thread-local, bộ đệm rayon/std) | v3_engine.md §7 |
+| Khóa/atomic của `RcLocal`: thay `Mutex<Local>` bằng ô không đồng bộ | ~1% | v3_engine.md §3 |
+| `get_mut` trước `entry(local.clone())` để tránh refcount atomic | 0% | v3_engine.md §7 |
+| Allocator khác ngoài mimalloc (mimalloc v2/v3/direct TLS) | ±0%. mimalloc so với allocator hệ thống là ~1,5x và được giữ; jemalloc không hỗ trợ MSVC | v3_engine.md §3 |
+| Thay mọi bảng băm bằng mảng | ~10%, chỉ trong pha đổi tên SSA; giữ làm hạ tầng | v3_engine.md §7 |
+| Compact `RValue` (enum nhỏ hơn) | Thời gian chậm hơn 1,30% | [2026-09-27-followup.md](2026-09-27-followup.md), mục Compact RValue |
+| Early SSA sealing | Loại: đổi output và xung đột với guard provenance | 2026-09-27-followup.md, mục Early SSA sealing |
+| Chuyển sang compact IR sớm (W13) | Loại trước khi làm: số đo giảm statement lấy ở giai đoạn sau, không áp dụng được | 2026-09-27-followup.md, W13 |
+| Băm local theo phạm vi / thêm finalizer (W14) | Chỉ có mô hình đếm thao tác, không đo được speedup | 2026-09-27-followup.md, W14 |
+
+## 2. Thuật toán và pass
+
+| Hướng | Kết quả đo | Nguồn |
+|---|---|---|
+| Chỉ giữ local bị capture trong `stable_captured` của inline_temps | 0%: chi phí nằm ở lượt duyệt, không ở insert | v3_engine.md §7 |
+| Cờ "cả chunk không có goto" cho inline_temps | Lợi ~45 ms, tốn ~60 ms để tính | v3_engine.md §7 |
+| Bỏ lượt quét "không đổi" cuối của SSA inliner (~0,35 s) | Không chứng minh được giữ nguyên output: census mới có thể mở cơ hội inline mới | v3_engine.md §7 |
+| Tránh clone entry | 0% | nhánh `v3-engine` |
+| Tính lại dominator trong vòng lặp của `decompile_function` | Chỉ ~2%. Tính một lần thì không an toàn vì đồ thị thay đổi | nghiên cứu độ trễ một script, 2026-06 |
+| Index `last_occ` của deinline dựng sẵn từ đầu | Chậm hơn: dựng 9.717 bảng mỗi script. Phải dựng lazy (10–23 lần, <1 ms) | nghiên cứu độ trễ một script, 2026-06 |
+| Bỏ pass, chấp nhận output thay đổi (ablation từng pass) | Chỉ `inline_single_use_temps` riêng là thừa (~3%); không merge | v3_engine.md §9 |
+| Index theo key cho việc gộp field vào constructor ở tầng SSA (`cfg/src/ssa/inline.rs`) | Không đo được lợi ích: template DUPTABLE tối đa 32 key, các workload table chạy cả pipeline không đổi; lại trùng logic với `PlaceholderEntries` | review PR #6, 2026-10-04 |
+| Deinline, lượt vào pha gán: bỏ qua matcher thường ở mọi chỗ mà lượt trước (không đổi gì) đã thử và không thấy site | Sai output (2 file, `HitboxFunctions`): trong cùng lượt, một store được dựng lại ở khối con làm đổi cửa sổ của khối cha, nên matcher thường của cha lại khớp. Chỉ bỏ qua được khi chưa có splice nào trong khối hay khối con của nó, và pattern không chứa closure (`Rescan`) | m2a-perf, 2026-10-09 |
+| Deinline: gác cửa sổ của target có thể specialize bằng câu đầu của pattern thường | Không hợp lệ, không đo: specialization thay tham số rồi `reduce()` gập biểu thức (`x = p + 1` với `p = 2` thành `x = 3`), nên câu đầu không unify với pattern thường vẫn có thể khớp. Gác câu đầu (`head_refused`) chỉ dùng cho target không specialize được | m2a-perf, 2026-10-09 |
+
+### Public V2.7, 27/10/2026: chia sẻ thêm một lượt decode source lines
+
+Thử truyền Vec source lines từ prototype setup sang Lifter để tránh decode hai lần cho M6. Output byte-identical trên 513 input public. Release A/B cùng nightly-2026-06-15, ghim CPU, cache artifact tắt; benchmark_v2.py dùng output directory ấm, 25 sample xen kẽ mỗi bên: 1 worker median 0,669725 → 0,682328 s (+1,88%), 4 workers 0,199420 → 0,197583 s (-0,92%). Lượt thăm dò 7 sample cũng không có lợi ở một luồng. Không giữ thay đổi vì không cải thiện mục tiêu một luồng; không dùng việc giảm số lần decode làm bằng chứng speedup. Raw reports, source patch và binary ở `/workspace/work/v27/lines-repeat-t{1,4}.json`, `lines-rejected.patch`, `luau-lifter-lines`; không có private dump/Windows timing claim.
+
+### Public V2.7, 27/10/2026: ASCII buffer cho naming
+
+Thử chuyển shared lower-camel và hai sanitizer từ Vec<char> sang Vec<u8>, dùng String::from_utf8 để giữ buffer. 1.161 AST tests đạt; mọi public output byte-identical. So với candidate chỉ có cache formatter, 7 sample A/B cho median 1t -0,5%, 4t -1,1%; 51 sample xen kẽ ghim CPU cho median 1t 0,778117 → 0,770349 s (-1,0%), 4t 0,218694 → 0,218607 s (gần 0%). Nhưng median paired ratios 1,0103/1,0012, chỉ 25/51 và 22/51 cặp nhanh hơn; RSS median không giảm. Loại vì chưa chứng minh lợi ích end-to-end ổn định, không dùng bớt allocation lý thuyết làm speedup. Evidence: `/workspace/work/v27/ascii-naming-candidate.patch`, `luau-lifter-ascii-naming`, `ascii-naming-{measure,confirm-t1.json,confirm-t4.json}`; không có private workload claim.
+
+### Public V2.7, 27/10/2026: scoped candidate index
+
+Port riêng bộ lọc head từ `origin/feat/deinline-next` (`e0b2f3c`), không lấy refactor/recovery khác. Bitset theo thứ tự priority chỉ bỏ attempt đã bị gate kind/name hiện hữu từ chối trước search fuel; rivals và thứ tự đầy đủ vẫn giữ. 154 deinline tests đạt, gồm bảy test index đối chiếu predicate độc lập. 513 outputs public byte-identical ở mọi mẫu. Profile riêng cho thấy index chỉ được dựng 18 lần/291 target entries trên 3/513 inputs.
+
+7 mẫu ordinary release: 1t -0,6%, 4t +1,1%. 51 mẫu xen kẽ, ghim CPU: 1t median 0,765077 → 0,762502 s (-0,34%), 4t 0,220181 → 0,220367 s (+0,08%); paired medians 1,0113/0,9992, thắng 21/51 và 27/51 cặp. RSS không giảm. Loại vì không cải thiện end-to-end trên workload public khả dụng; không suy lợi ích từ synthetic distinct-anchor workload của nhánh gốc. Không chạy full 33 gates cho code bị loại. Binary `8dc5032cb3d7d1d4b3bef83d2101143d18eea5638da67ca2b5f243753ee3c979`, patch/module, profile và reports được lưu tại `/workspace/work/v27/scoped-candidates-*`; source khôi phục byte-for-byte về `ba776bd`.
+
+### Public V2.7, 28/10/2026: import-only census và expression helper shape
+
+Thử một cấp census chỉ thu globals/environment cho `fold_import_callees`, cùng traversal/refusal bounds như full census; expression helper admission dùng shape-only census hiện hữu. 1.166 AST tests đạt, gồm differential facts và budget boundaries. 513 public outputs giữ từng byte qua mọi sample. Lượt thăm dò 7 samples cho 1t -4,8%, 4t -5,4%, nhưng xác nhận 51 samples xen kẽ ghim CPU chỉ cho median 1t 0,729905 → 0,729122 s (-0,11%), 4t 0,210078 → 0,209108 s (-0,46%). Paired medians 0,98398/0,99744, thắng 30/51 và 28/51 cặp; RSS không giảm đáng kể. Loại vì không có lợi ích end-to-end ổn định đủ để giữ thêm cấp facts; không lấy lượt thăm dò làm kết quả cuối. Không chạy full 33 gates cho code bị loại. Patch, binary và toàn bộ sample nằm tại `/workspace/work/v27/census-facts-{rejected.patch,r7-t1.json,r7-t4.json,r51-t1.json,r51-t4.json}`, binary SHA256 `679cc599dd71d6374748c2fc3d98690d6482516e35e4d0cb7e68673514ce7645`. Source ba file khôi phục byte-for-byte về `d3e64a2`. Không có private/Windows timing claim.
+
+### Public V2.7, 28/10/2026: lọc SSA producer trước proof di chuyển
+
+Từ CPU profile tại `d3e64a2`, thử kiểm tra destination có thuộc eligibility snapshot của consumer trước các proof depth/capture/handle. Không bỏ statement barriers, iterator-pack path hoặc đổi thứ tự producer. 39 inliner tests đạt, gồm differential từng sweep/origins/events và controls với 32 producer không liên quan, callback barriers, pack 2/3 slots. Mọi 513 output public giữ từng byte. Thăm dò 7 samples: 1t -1,1%, 4t +3,9%. Xác nhận 51 samples xen kẽ ghim CPU: median 1t 0,776666 → 0,780553 s (+0,50%), 4t 0,218285 → 0,218774 s (+0,22%); paired medians 0,99907/0,99761, thắng 26/51 và 27/51. Loại vì không có lợi ích end-to-end; không chạy full 33 gates cho code bị loại. Evidence tại `/workspace/work/v27/ssa-relevance-*`, binary SHA256 `58d2d8328f4ed092074abc91673ade5a12e1227f5a6ca2777a7c31695d602ea6`; source khôi phục byte-for-byte về `d3e64a2`. Không có private/Windows timing claim.
+
+### Public V2.7, 28/10/2026: bỏ alias scan khi captured-cell map rỗng
+
+Thử chuẩn hóa `Some(empty)` thành `None` tại shared `remove_unnecessary_params`, tránh duyệt/resolving mọi incoming alias chỉ để hỏi một map rỗng. 16 construct tests đạt, trong đó differential mới mở rộng thành 45 tổ hợp no-map/empty/grouped captures, duplicate/raw aliases/self edges; schema failure boundary và local-map order giữ nguyên. Mọi 513 public outputs byte-identical.
+
+So với `b798e5b`, thăm dò 7 samples: 1t +5,8%, 4t -0,7%. Xác nhận 51 samples xen kẽ ghim CPU: median 1t 0,725481 → 0,718761 (-0,9%), 4t 0,220796 → 0,220015 (-0,4%); paired medians 1,00183/0,99576, thắng 24/51 và 28/51. [CPU-time diagnostic](../v2_7/checkpoint_cpu_time.md), thêm 25 samples cùng binary, cho paired CPU ratios 1,00640/0,99280, thắng 11/25 và 17/25; intervals vẫn chứa 1. Loại vì không xác nhận lợi ích end-to-end, nhất là mục tiêu một worker; không lấy bỏ một lượt quét làm speedup. Không chạy full 33 gates cho code bị loại. Patch, binary `73145408e16e1e2c17bdbb059217927827f7bccca05d491b0ab47debfbcb58cf`, logs và raw samples tại `/workspace/work/v27/empty-cells-*`, cùng `ssa-cpu-*`. Source khôi phục byte-for-byte và binary thông thường phục hồi về `b798e5b`; không có private/Windows timing claim.
+
+## 3. Build và toolchain
+
+| Hướng | Kết quả đo | Nguồn |
+|---|---|---|
+| `codegen-units=1`, `target-cpu=v3/native`, thin LTO, `debug=false` | <3%, trong nhiễu | nghiên cứu độ trễ một script, 2026-06 |
+| PGO | W7: 5,11% / 3,48%, dưới ngưỡng 10% đặt trước. Đo lại: 0–2%, kể cả khi train trên chính bộ đo | 2026-09-27-followup.md W7; v3_engine.md §9 |
+| `panic = "abort"` | Cấm: mỗi hàm được cô lập bằng `catch_unwind` | `luau-lifter/src/lib.rs` |
+| Binaryen cho worker wasm | 2,5–3% ở các lượt lặp, chậm hơn ở lượt đầu; giữ `--no-opt` | 2026-09-27-followup.md, mục Worker |
+
+## 4. Cache và song song
+
+| Hướng | Kết quả đo | Nguồn |
+|---|---|---|
+| Cache theo hàm (proto) | 12,5% proto nhưng chỉ 4,1% số lệnh trùng giữa các script; trung vị mỗi file 0%. Cache nguyên file (đã có) mới có ích | v3_engine.md §9 |
+| Song song theo closure trong pipeline AST | Không làm được: `name_locals` cần tập tên dành trước của cả chương trình | nghiên cứu độ trễ một script, 2026-06 |
+| Gom payload trùng (đọc + băm trước mọi input) cả khi cache đã có dữ liệu | Cache ấm chậm hơn ~3% (median 0,630 → 0,648 s, 24 luồng). Chỉ gom khi không có cache hoặc cache rỗng; cache lạnh nhờ vậy nhanh hơn ~8% | PR #6, 2026-10-04 |
+
+## 5. Ghi file
+
+| Hướng | Kết quả đo | Nguồn |
+|---|---|---|
+| Xóa rồi tạo lại mọi file output (chống ghi xuyên symlink/hard link) | Chậm hơn 24% khi ghi đè một cây output có sẵn trên Windows (0,91 → 1,13 s, 24 luồng). Thay bằng `create_new`; file đã có mà không bị alias thì truncate tại chỗ, bằng tốc độ cũ | commit `9d39a89` |
+| Bỏ fsync từng file ở chế độ analysis (`--emit-upvalue-analysis`) | 1 luồng 31,8 → 25,1 s nhưng 24 luồng không đổi: nút thắt là metadata hệ thống file (temp + rename từng file) | v3_engine.md §9 |
+
+## 6. Bẫy khi đo
+
+- **Chỉ so hai binary build cùng cấu hình.** Bản build incremental so với bản build
+  thường trông như chậm đều ~5% ở *mọi* pass, kể cả pass không đổi code. Build lại cùng
+  cấu hình thì hai bên bằng nhau (2026-10-04).
+- **Máy nhiễu.** Đo một luồng không ghim nhân dao động ±50%, và tốc độ máy trôi trong
+  ngày (cùng một binary: 8,07 s rồi 4,33 s). Chỉ tin phép đo xen kẽ, ghim nhân P (công cụ
+  ở [v3_engine.md](../v3_engine.md) §6).
+- **Chọn đúng mốc so sánh.** Con số "1,49x" của V3 là so với một bản v2.2 local vốn chậm
+  hơn release. So với release v2.1.1: 1,31x (1 luồng), 1,14x (24 luồng).
+- **Ước lượng theo kiến trúc thường hứa quá.** [v2_5_engine_research.md](v2_5_engine_research.md)
+  dự báo 2,5x–4x; thực đo của engine V3 là 1,31x so với release. Chỉ báo số đo.
+
+## Hướng còn mở (cần quyết định, chưa bị loại)
+
+Các hướng này chưa được đo là vô ích. Chúng phá ràng buộc output giống hệt từng byte,
+hoặc đang được để sau:
+
+- Gộp pass, hoặc IR mới cho phần chunk. Output có thể đổi nên cần gate chất lượng thay cho
+  so byte ([v3_engine.md](../v3_engine.md) §8).
+- Cache nguyên script trên web server, cho các thư viện bị bundle lặp giữa các game (§8).
+- Chế độ analysis: publish cả cây output một lần (staging rồi đổi tên thư mục), kiểm tra gốc
+  `scripts` một lần mỗi lần chạy (§9).

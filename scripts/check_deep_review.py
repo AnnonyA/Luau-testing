@@ -1,0 +1,621 @@
+#!/usr/bin/env python3
+"""Kiểm tra hồi quy bằng bytecode gốc và source decompile được biên dịch lại."""
+import argparse
+import collections
+import hashlib
+import json
+import pathlib
+import re
+import struct
+import subprocess
+import sys
+
+from expected_refusals import OPEN_CALL_ORDER_REFUSAL, refusal_outcome_matches
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+# These error probes compare the message body; source line numbers change on decompilation.
+ERROR_REPORTER = ('local function report(ok, ...) if ok then print(ok, ...) else '
+                  'local message = ...; print(ok, (message:gsub("^subject:%d+: ", ""))) end end; ')
+FALLBACK_DRIVER = (ROOT / "docs/failure_fixtures/fastcall_fallback.driver.luau").read_text()
+CASES = {
+    "vector_member_fallback": ((ROOT / "docs/failure_fixtures/vector_member_fallback.luau").read_text(),
+                               (ROOT / "docs/failure_fixtures/vector_member_fallback.driver.luau").read_text()),
+    "fastcall_open_result_controls": ((ROOT / "docs/failure_fixtures/fastcall_open_result_controls.luau").read_text(),
+                                      (ROOT / "docs/failure_fixtures/fastcall_open_result_controls.driver.luau").read_text()),
+    "fastcall_open_result_error": ((ROOT / "docs/failure_fixtures/fastcall_open_result_error.luau").read_text(),
+                                   (ROOT / "docs/failure_fixtures/fastcall_open_result_error.driver.luau").read_text()),
+    "builtin_constant_call": ((ROOT / "docs/failure_fixtures/builtin_constant_call.luau").read_text(),
+                              (ROOT / "docs/failure_fixtures/builtin_constant_call.driver.luau").read_text()),
+    "native_scalar_inlining": ((ROOT / "docs/failure_fixtures/native_scalar_inlining.luau").read_text(),
+                               (ROOT / "docs/failure_fixtures/native_scalar_inlining.driver.luau").read_text()),
+    "generic_for_nested_inline_g2": ((ROOT / "docs/failure_fixtures/generic_for_nested_inline_g2.luau").read_text(), ""),
+    "repeat_return_in_if_O2": ((ROOT / "docs/failure_fixtures/repeat_return_in_if_O2.luau").read_text(), ""),
+    "deinline_copy_written_before_capture": ((ROOT / "docs/failure_fixtures/deinline_copy_written_before_capture.luau").read_text(), ""),
+    "deinline_copy_per_site": ((ROOT / "docs/failure_fixtures/deinline_copy_per_site.luau").read_text(), ""),
+    "deinline_loop_exit_helpers": ((ROOT / "docs/failure_fixtures/deinline_loop_exit_helpers.luau").read_text(), ""),
+    "for_variable_captures": ((ROOT / "docs/failure_fixtures/for_variable_captures.luau").read_text(), ""),
+    "deinline_and_or_sites": ((ROOT / "docs/failure_fixtures/deinline_and_or_sites.luau").read_text(), ""),
+    "vector_constructor_alias": ((ROOT / "docs/failure_fixtures/vector_constructor_alias.luau").read_text(), ""),
+    "fastcall_fallback_prefix_write": ((ROOT / "docs/failure_fixtures/fastcall_fallback_prefix_write.luau").read_text(),
+                                       (ROOT / "docs/failure_fixtures/fastcall_fallback_prefix_write.driver.luau").read_text()),
+    "fastcall_fallback_prefix_read": ((ROOT / "docs/failure_fixtures/fastcall_fallback_prefix_read.luau").read_text(),
+                                      (ROOT / "docs/failure_fixtures/fastcall_fallback_prefix_read.driver.luau").read_text()),
+    "fastcall_alias_snapshot": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/fastcall_alias_snapshot.luau").read_text(), ''),
+    "fastcall_fallback_captured": ((ROOT / "docs/failure_fixtures/fastcall_fallback_captured.luau").read_text(), FALLBACK_DRIVER),
+    "fastcall_fallback_effects": ((ROOT / "docs/failure_fixtures/fastcall_fallback_effects.luau").read_text(), FALLBACK_DRIVER),
+    "incoming_operand_read_timing": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/incoming_operand_read_timing.luau").read_text(), ''),
+    "binary_snapshot_timing": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/binary_snapshot_timing.luau").read_text(), ''),
+    "table_open_list_owned_key_timing": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_owned_key_timing.luau").read_text(), ''),
+    "table_open_list_incoming_key_timing": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_incoming_key_timing.luau").read_text(), ''),
+    "table_open_list_late_key_read": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_late_key_read.luau").read_text(), ''),
+    "table_open_list_key_errors": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_key_errors.luau").read_text(), ''),
+    "table_open_list_positional_prefix": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_positional_prefix.luau").read_text(), ''),
+    "table_open_list_captured_key": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_captured_key.luau").read_text(), ''),
+    "readable_captured_choice": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/readable_captured_choice.luau").read_text(), ''),
+    "readable_if_final_names": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/readable_if_final_names.luau").read_text(), ''),
+    "table_open_list_growth": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_open_list_growth.luau").read_text(), ''),
+    "table_partial_array_keys": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_partial_array_keys.luau").read_text(), ''),
+    "table_mixed_allocation_growth": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_mixed_allocation_growth.luau").read_text(), ''),
+    "naming_literal_object_name": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/naming_literal_object_name.luau").read_text(), ''),
+    "naming_branch_consensus": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/naming_branch_consensus.luau").read_text(), ''),
+    "table_large_allocation": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_large_allocation.luau").read_text(), ''),
+    "table_unobserved_placeholder": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_unobserved_placeholder.luau").read_text(), ''),
+    "naming_irregular_collections": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/naming_irregular_collections.luau").read_text(), ''),
+    "table_empty_observers": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_empty_observers.luau").read_text(), ''),
+    "table_duplicate_numeric_capacity": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_duplicate_numeric_capacity.luau").read_text(), ''),
+    "table_array_dynamic_key": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_array_dynamic_key.luau").read_text(), ''),
+    "table_array_call_truncation": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_array_call_truncation.luau").read_text(), ''),
+    "table_array_mixed_keys": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_array_mixed_keys.luau").read_text(), ''),
+    "table_numeric_hash_layout": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_numeric_hash_layout.luau").read_text(), ''),
+    "table_newtable_growth": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_newtable_growth.luau").read_text(), ''),
+    "table_empty_growth": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_empty_growth.luau").read_text(), ''),
+    "table_template_runtime_nil_growth": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_template_runtime_nil_growth.luau").read_text(), ''),
+    "table_helper_new_template": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_helper_new_template.luau").read_text(), ''),
+    "table_helper_template_new": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_helper_template_new.luau").read_text(), ''),
+    "table_newtable_replace_nil": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_newtable_replace_nil.luau").read_text(), ''),
+    "table_newtable_replace_with_nil": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_newtable_replace_with_nil.luau").read_text(), ''),
+    "table_newtable_move_nil": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_newtable_move_nil.luau").read_text(), ''),
+    "table_duplicate_nil_capacity": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_duplicate_nil_capacity.luau").read_text(), ''),
+    "table_duplicate_value_capacity": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_duplicate_value_capacity.luau").read_text(), ''),
+    "table_runtime_nil_layout": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/table_runtime_nil_layout.luau").read_text(), ''),
+    "deinline_vector_arguments": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/deinline_vector_arguments.luau").read_text(), ''),
+    "deinline_copy_capture_rebound": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/deinline_copy_capture_rebound.luau").read_text(), ''),
+    "proven_return_types": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/proven_return_types.luau").read_text(), ''),
+    "source_spacing": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/source_spacing.luau").read_text(), ''),
+    "readable_multiline_strings": ((ROOT / "docs/failure_fixtures/semantic_roundtrip/readable_multiline_strings.luau").read_text(encoding='utf-8'), ''),
+    "math_shadow": ('local math={huge=5,pi=7}; print(math.huge,1/0,math.pi,3.141592653589793)', ''),
+    "math_parameter": ('local function f(math) return 1/0,math end; print(f(42))', ''),
+    "math_global": ('math={huge=5,pi=7}; print(1/0,3.141592653589793)', ''),
+    "vector_shadow": ('local Vector3={new=function() return "fake" end}; print(Vector3.new(),vector.create(1/0,0,0))', ''),
+    "vector_global": ('print(vector.create(1,2,3))', ''),
+    "vector_local": ('local v=vector.create(1,2,3); local vector={create=function() return "fake" end}; print(vector.create(),v)', ''),
+    "format_table": ('print(("%*"):format({}) ~= nil)', ''),
+    "format_method": ('local n=5; print(("x%*y"):format(n):sub(1,1))', ''),
+    "format_index": ('local n=5; print(("x%*y"):format(n)["sub"]("abc",1,1))', ''),
+    "conditional_value": ('return function(a,b,x) local z=x; if a then z=b; if z then return 99 end end; return z end',
+        'for _,a in {false,true} do for _,b in {false,true} do print(a,b,f(a,b,11)) end end'),
+    "numeric_break": ('return function(n,s) for i=1,n,s do break end; return "after" end',
+        'for _,n in {-2,0,1,3,1/0,0/0} do for _,s in {1,-1,0} do print(f(n,s)) end end; local ok=pcall(f,{},1); print(ok)'),
+    "snapshot_return_call": ('return function() local a=1; local function mutate() a=2; return 3 end; local old=a; return mutate(),old end', 'print(f())'),
+    "snapshot_return_operator": ('return function() local a=1; local t=setmetatable({},{__add=function() a=2; return 3 end}); local old=a; return old,t+t,old end', 'print(f())'),
+    "snapshot_return_index": ('return function() local a=1; local t=setmetatable({},{__index=function() a=2; return 3 end}); local old=a; return t.x,old end', 'print(f())'),
+    "snapshot_across_operator": ('return function() local a=1; local t=setmetatable({},{__add=function() a=2; return 3 end}); local old=a; local z=t+t; return old,z,z end', 'print(f())'),
+    "unary_condition_and": ('return function(a) if -(a and 3) then return 7 else return 8 end end', 'for _,a in {true,false,0,2} do local ok,v=pcall(f,a); print(ok,if ok then v else "ERROR") end'),
+    "unary_condition_or": ('return function(a) if -(a or 3) then return 7 else return 8 end end', 'for _,a in {true,false,0,2} do local ok,v=pcall(f,a); print(ok,if ok then v else "ERROR") end'),
+    "api_vector3": ('Vector3={new=function(x,y,z) print("new",x,y,z); return 7 end,zero=99}; print(Vector3.new(0,0,0))', ''),
+    "api_vector2": ('Vector2={new=function(x,y) print("new",x,y); return 7 end,one=99}; print(Vector2.new(1,1))', ''),
+    "api_cframe": ('CFrame={new=function() print("new"); return 7 end,identity=99}; print(CFrame.new())', ''),
+    "interpolation_open_call": ('local function nothing() end; return function() print(("%*"):format(nothing())) end', ERROR_REPORTER + 'report(pcall(f))'),
+    "interpolation_open_vararg": ('return function(...) print(("%*"):format(...)) end', ERROR_REPORTER + 'report(pcall(f)); report(pcall(f,1,2))'),
+    "interpolation_rejected_late_specifier": (
+        'return function(value, count) return ("[%*]:%04d"):format(value, count) end',
+        'print(f("value",7)); print(f(false,-2)); local value=setmetatable({},'
+        '{__tostring=function() print("tostring"); return "object" end}); print(f(value,12))'),
+    "interpolation_rejected_late_static_byte": (
+        r'return function(value) return ("[%*]\007"):format(value) end',
+        'for _,value in {"x","界"} do local s=f(value); print(#s,string.byte(s,1,#s)) end'),
+    "interpolation_rejected_too_few_arguments": (
+        'return function(value) return ("%*:%*"):format(value) end',
+        ERROR_REPORTER + 'report(pcall(f,"value")); report(pcall(f,false)); report(pcall(f,nil))'),
+    "interpolation_rejected_too_many_arguments": (
+        'return function(value, extra) return ("[%*]"):format(value, extra) end',
+        'local extra=setmetatable({},{__tostring=function() print("unexpected-extra-tostring"); '
+        'return "extra" end}); print(f("value",extra)); print(f(false,extra)); print(f(nil,extra))'),
+    "interpolation_rejected_nested_scalar_calls": (
+        r'return function(value) return ("%*\007"):format((("%*\007"):format((("%*\007"):format(value))))) end',
+        'for _,value in {"leaf","界"} do local s=f(value); print(#s,string.byte(s,1,#s)) end'),
+    "interpolation_valid_escaped_unicode": (
+        r'return function(value) return ("界`{\\\n\t\r\f}%%:%*"):format(value) end',
+        'for _,value in {"leaf","đ",false} do local s=f(value); print(#s,string.byte(s,1,#s)) end'),
+    "conditional_captured_cell": ('return function(n,flag) local a=n; local read=function() return a end; if flag then a=false; if a then return "bad" end end; return a,read() end', 'for _,n in {1,0,false} do for _,flag in {false,true} do print(n,flag,f(n,flag)) end end'),
+    # Phi copies at the head of the empty loop's step block touch `b`, a cell
+    # `__iter` code may see: moved to the edge from the preparation they
+    # would follow it, which no source spells (typed fuzzer, -g2 names).
+    "step_copies_after_generic_preparation": (
+        'local function record(...) for index = 1, select("#", ...) do end return ... end '
+        'return function(input, flip, ...) local a, b = input, if flip then 1 else -1 '
+        'local function iterate(limit) local index = 0 return function() index += 1 end end '
+        'for w in iterate(0) do end '
+        'for i = 1, 3 do a, b = b, a for j = 1, 2, 0.5 do if (if flip then 0.5 else i) >= record(1e300) then end end end '
+        'if (not flip or flip) and record(not flip) then local function get() return b end cell = -1 end '
+        'return a, b, cell end',
+        'print(f(-3, true)); cell = nil; print(f(2, false))'),
+    # `b`'s first version enters as a phi and `a, b = b, a` writes it again:
+    # a copy taken before the write is no value of the cell's storage
+    # (typed fuzzer, -g2 names; the choice took the cell's register).
+    "cell_version_entering_as_phi": (
+        'return function(input, flip) local a, b = input, if flip then 1 else -1 '
+        'local function bump() return b end local guard = 0 '
+        'while guard < 1 do guard += 1 a, b = b, a print(`<{input}|{(not flip) and a or guard}>`, a) end '
+        'return a, b, bump() end',
+        'print(f(-3, true)); print(f(-3, false)); print(f(false, false))'),
+    "dominator_parallel_loop": ('return function(n,flip) local a,b,c=n,n+1,n+2; for j=1,2 do a,c=b,b+c; if j==2 then a,c=c,a+b; continue end; if flip then a,b=c,a; break end; a=a+1 end; c=c+3; return a,b,c end', 'for _,n in {-2,0,1,2,3,5,9} do for _,flag in {false,true} do print(n,flag,f(n,flag)) end end'),
+    # `debug.info(2, ...)` names the caller, which may be in another
+    # script: code reading it never moves into a helper, whose frame the
+    # caller would become.
+    "debug_info_caller_source": (
+        'local function matches(expected) return debug.info(2, "s") == expected and type(expected) == "string" end '
+        'return {subject = function(expected, fallback) return not (debug.info(2, "s") == expected '
+        'and type(expected) == "string") and fallback or "same" end, '
+        'direct = function(expected) return matches(expected) end}',
+        'local here = debug.info(1, "s"); print(f.subject(here, "different"), f.direct(here))'),
+    "integer_literals": ('return {42i,9007199254740993i,-0x8000000000000000i,9223372036854775807i,-42i,0i,{n=9007199254740993i}}', 'for i=1,6 do local v=f[i]; print(type(v),tostring(v),v==42) end; print(type(f[7].n),tostring(f[7].n))'),
+}
+
+# The configured constructor is supplied by the driver before the returned
+# function runs. A FASTCALL fallback alone does not make that member immutable.
+VECTOR3_CASES = {
+    'vector3_member_write': (
+        'return function() local function offset(x) return Vector3.new(x, 1, 2) end '
+        'Vector3.new = function() return 99 end '
+        'local value = Vector3.new(4, 1, 2) print(type(value), value) return offset end',
+        'Vector3 = {new = vector.create}; f()'),
+    'vector3_alias_write': (
+        'return function() local function offset(x) return Vector3.new(x, 1, 2) end '
+        'local alias = Vector3; alias.new = function() return 99 end '
+        'local value = Vector3.new(4, 1, 2) print(type(value), value) return offset end',
+        'Vector3 = {new = vector.create}; f()'),
+    'vector3_environment': (
+        'local function offset(x) return Vector3.new(x, 1, 2) end '
+        'return function() return Vector3.new(4, 1, 2), offset end',
+        'getfenv(f).Vector3 = {new = function() return "fake" end}; '
+        'local value = f(); print(type(value), value)'),
+}
+
+CROSS_OPT_FIXTURES = (
+    'table_open_list_split_prefix', 'closure_identity_across_inlined_copies',
+    'deinline_closure_factories', 'closure_constant_cached_by_another_copy',
+    'value_capture_written_after_closure', 'paren_call_truncates_multret',
+    'parameter_hole_multret', 'snapshot_receiver_and_constructor_key',
+    'deinline_returns_distributed_and_short_circuit', 'exact_fraction_constants',
+    'duptable_gc_placeholder', 'duptable_earlier_gc_placeholder', 'native_builtin_environment',
+    'native_builtin_literal_arguments',
+    'native_builtin_site_arguments',
+)
+CROSS_OPT_BASELINE = ROOT / 'docs/failure_fixtures/deep_review_cross_optimization_baseline.json'
+# Only these reviewed source/profile/options tuples admit the open-result refusal.
+EXPECTED_INPUT_REFUSALS = {
+    (name, optimization, debug, digest,
+     ('--fflags=false', '--vector-lib=vector', '--vector-ctor=create')):
+        OPEN_CALL_ORDER_REFUSAL
+    for name, digest, optimizations, debugs in (
+        ('fastcall_open_result_error',
+         'd352150d50ed69efdb6edb6f6ae281d3ea3a115b9154a179b9aa17d28bb5ddb8', (1, 2), (0, 1, 2)),
+        ('closure_constant_cached_by_another_copy',
+         'c634332ae9d39e5d18b8cdc0ca39a3a80b3d8855a1b5f7b5a42f4e8b6bf5a74d', (1,), (0, 2)),
+        ('deinline_returns_distributed_and_short_circuit',
+         '6f086ea2feec7ac51539def54c1111b05cfba9074713453db120aab41784ac21', (1,), (0, 2)),
+    )
+    for optimization in optimizations for debug in debugs
+}
+PROFILE_FIELDS = ('ca', 'input_optimization', 'output_optimization', 'debug')
+IDENTITY_FIELDS = (*PROFILE_FIELDS, 'source_sha256', 'driver_sha256', 'compiler_options',
+                   'driver_optimization', 'driver_debug')
+
+
+def run(command):
+    result = subprocess.run([str(arg) for arg in command], capture_output=True, timeout=60)
+    return {"exit_code": result.returncode,
+            "stdout": result.stdout.decode("utf-8", errors="surrogateescape"),
+            "stderr": result.stderr.decode("utf-8", errors="surrogateescape")}
+
+
+def normalize(output):
+    output = re.sub(r'(subject|driver):\d+', 'FILE:N', output)
+    return re.sub(r'(?:[A-Za-z]:)?[^\s:]+\.luau:\d+(?::\d+)?', 'FILE:N', output.replace('\r\n', '\n')).strip()
+
+
+def compiler_options(integer=False, vector3=False):
+    flags = '--fflags=false,LuauIntegerType2=true' if integer else '--fflags=false'
+    library, constructor = ('Vector3', 'new') if vector3 else ('vector', 'create')
+    return [flags, f'--vector-lib={library}', f'--vector-ctor={constructor}']
+
+
+def compile_source(args, source, destination, optimization, debug, integer=False, vector3=False):
+    command = [str(args.compiler), '--binary', *compiler_options(integer, vector3),
+               f'-O{optimization}', f'-g{debug}', str(source)]
+    result = subprocess.run(command, capture_output=True, timeout=60)
+    destination.write_bytes(result.stdout)
+    if result.returncode:
+        raise RuntimeError(result.stderr.decode(errors='replace'))
+
+
+class Refused(Exception):
+    """The decompiler refused the case with the reason it names."""
+
+
+def observation(result, normalized=False):
+    return {key: normalize(result[key]) if normalized and key != 'exit_code' else result[key]
+            for key in ('exit_code', 'stdout', 'stderr')}
+
+
+def fingerprint(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=False,
+                                    separators=(',', ':')).encode('utf-8', errors='surrogateescape')).hexdigest()
+
+
+def profile_key(row):
+    return tuple(row[field] for field in PROFILE_FIELDS)
+
+
+def baseline_identity_matches(row, baseline):
+    return all(row.get(field) == baseline.get(field) for field in IDENTITY_FIELDS)
+
+
+def portable(output):
+    """Output as every platform prints it: LF line ends, a script path as its
+    file name. Every printed location (`subject:12`, `file.luau:34`) stays."""
+    return re.sub(r'(?:[A-Za-z]:)?[^\s:]*[\\/]([^\\/\s:]+\.luau)', r'\1', output.replace('\r\n', '\n'))
+
+
+def observation_fingerprints(row):
+    return {field: {'raw': fingerprint(observation(row[field])),
+                    'normalized': fingerprint(observation(row[field], True)),
+                    'portable': fingerprint({key: portable(value) if key != 'exit_code' else value
+                                             for key, value in observation(row[field]).items()})}
+            for field in ('goc', 'sau_sua', 'source_at_output_optimization') if field in row}
+
+
+def portable_fingerprints(observations):
+    """The fingerprints a reviewed profile is matched by: the raw output on any
+    platform ([`portable`]), so a changed printed location never matches."""
+    return {field: fingerprints['portable'] for field, fingerprints in observations.items()}
+
+
+def classify_baseline(row, baseline):
+    if baseline is None:
+        return
+    if not baseline_identity_matches(row, baseline):
+        row.update(status='failed', ket_qua='FAIL', failure_stage='baseline_identity',
+                   loi='cross-optimization baseline source, driver or compiler options changed')
+    elif row['status'] == 'passed':
+        if observation(row['goc']) != observation(row['sau_sua']):
+            row.update(status='failed', ket_qua='FAIL', failure_stage='baseline_observation',
+                       loi='raw observations differ for a reviewed baseline profile')
+        else:
+            row['improved_from'] = baseline['status']
+    elif row['status'] == 'failed':
+        fields = ('goc', 'sau_sua', 'source_at_output_optimization')
+        if baseline['status'] == 'cross_level_limit':
+            # Reviewed: recompiled at another level than its input, the output
+            # follows that level's own semantics (O2 inlining reads, builtin folding,
+            # FASTCALL arity) where the bytecode cannot tell the source's spelling.
+            # Only exact at the input's level is promised; these exact runs stay known.
+            if (row['input_optimization'] != row['output_optimization']
+                    and all(field in row for field in fields)
+                    and portable_fingerprints(observation_fingerprints(row)) == portable_fingerprints(baseline['observations'])):
+                row.update(status='cross_level_limit', ket_qua='CROSS_LEVEL_LIMIT')
+        elif (all(field in row and row[field]['exit_code'] == 0 for field in fields)
+                and observation(row['goc'], True) != observation(row['source_at_output_optimization'], True)
+                and observation(row['sau_sua']) == observation(row['source_at_output_optimization'])
+                and portable_fingerprints(observation_fingerprints(row)) == portable_fingerprints(baseline['observations'])):
+            row.update(status='compiler_sensitive', ket_qua='COMPILER_SENSITIVE')
+
+
+def check(args, name, source, driver, optimization, debug, bytecode=None, integer=False,
+          output_optimization=None, refusal=None, vector3=False, baseline=None):
+    """`refusal`: a decompile failure naming this reason passes too."""
+    output_optimization = optimization if output_optimization is None else output_optimization
+    suffix = '' if output_optimization == optimization else f'.outO{output_optimization}'
+    directory = args.work / f'{name}.O{optimization}.g{debug}{suffix}'
+    directory.mkdir(parents=True, exist_ok=True)
+    original = directory / 'input.luau'
+    original.write_text(source, encoding='utf-8')
+    driver_source = directory / 'driver.luau'
+    driver_source.write_text(driver, encoding='utf-8')
+    data, output_data, driver_data = [directory / filename for filename in ('input.bc', 'output.bc', 'driver.bc')]
+    evidence = {"ca": name, "toi_uu": optimization, "debug": debug,
+                'input_optimization': optimization, 'output_optimization': output_optimization,
+                'source_sha256': hashlib.sha256(source.encode()).hexdigest(),
+                'driver_sha256': hashlib.sha256(driver.encode()).hexdigest(),
+                'compiler_options': compiler_options(integer, vector3),
+                'driver_optimization': 1, 'driver_debug': 1, 'group': case_group(name), 'status': 'failed'}
+    if (refusal is None and bytecode is None
+            and type(optimization) is int and type(debug) is int):
+        refusal = EXPECTED_INPUT_REFUSALS.get((name, optimization, debug, evidence['source_sha256'],
+                                               tuple(evidence['compiler_options'])))
+    stage = 'driver_compile'
+    try:
+        compile_source(args, driver_source, driver_data, 1, 1, integer, vector3)
+        stage = 'input_compile'
+        if bytecode is None:
+            compile_source(args, original, data, optimization, debug, integer, vector3)
+        else:
+            data.write_bytes(bytecode)
+            evidence['supplied_bytecode'] = True
+        stage = 'input_runtime'
+        evidence['goc'] = run([args.vm, data, driver_data])
+        assert evidence['goc']['exit_code'] == 0, evidence['goc']
+        stage = 'decompile'
+        evidence['decompile'] = run([args.lifter, data])
+        if refusal and evidence['decompile']['exit_code'] != 0:
+            if refusal == OPEN_CALL_ORDER_REFUSAL:
+                assert refusal_outcome_matches(refusal, evidence['decompile']), evidence['decompile']
+            else:
+                assert refusal in evidence['decompile']['stderr'] + evidence['decompile']['stdout'], evidence['decompile']
+            evidence['ket_qua'] = 'PASS'
+            evidence['status'] = 'expected_refusal'
+            evidence['tu_choi'] = refusal
+            raise Refused
+        assert evidence['decompile']['exit_code'] == 0, evidence['decompile']
+        output_source = directory / 'output.luau'
+        output_source.write_text(evidence['decompile']['stdout'], encoding='utf-8', errors='surrogateescape')
+        stage = 'output_compile'
+        compile_source(args, output_source, output_data, output_optimization, debug, integer, vector3)
+        stage = 'output_runtime'
+        evidence['sau_sua'] = run([args.vm, output_data, driver_data])
+        assert evidence['sau_sua']['exit_code'] == 0, evidence['sau_sua']
+        stage = 'runtime_comparison'
+        assert observation(evidence['goc']) == observation(evidence['sau_sua']), 'runtime observations differ'
+        evidence['ket_qua'] = 'PASS'
+        evidence['status'] = 'passed'
+    except Refused:
+        pass
+    except (AssertionError, RuntimeError, subprocess.TimeoutExpired) as error:
+        evidence['ket_qua'] = 'FAIL'
+        evidence['failure_stage'] = stage
+        evidence['loi'] = str(error)
+    if (getattr(args, 'cross_optimization', False) and evidence['status'] == 'failed'
+            and 'sau_sua' in evidence and bytecode is None):
+        try:
+            reference = directory / 'source-at-output-opt.bc'
+            compile_source(args, original, reference, output_optimization, debug, integer, vector3)
+            evidence['source_at_output_optimization'] = run([args.vm, reference, driver_data])
+        except (RuntimeError, subprocess.TimeoutExpired) as error:
+            evidence['source_at_output_error'] = str(error)
+    classify_baseline(evidence, baseline)
+    evidence['observations'] = observation_fingerprints(evidence)
+    (directory / 'result.json').write_text(json.dumps(evidence, ensure_ascii=True, indent=2), encoding='utf-8')
+    print(name, f'O{optimization}->O{output_optimization}', f'g{debug}', evidence['status'], flush=True)
+    return evidence
+
+
+def cross_optimization_cases():
+    cases = [(name, source, driver, False) for name, (source, driver) in CASES.items()]
+    cases.extend((name, source, driver, True) for name, (source, driver) in VECTOR3_CASES.items())
+    for name in CROSS_OPT_FIXTURES:
+        source = ROOT / 'docs/failure_fixtures/semantic_roundtrip' / f'{name}.luau'
+        cases.append((name, source.read_text(), '', False))
+    assert len({name for name, *_ in cases}) == len(cases), 'repeated cross-optimization case'
+    return cases
+
+
+def case_group(name):
+    for group, terms in (
+        ('table', ('table_', 'constructor_key')),
+        ('vector', ('vector',)),
+        ('closure_identity', ('closure', 'readable_captured_choice')),
+        ('capture', ('capture', 'cell_', 'snapshot_')),
+        ('multret', ('multret', 'interpolation_', 'format_')),
+        ('frames', ('debug_info_',)),
+        ('presentation', ('naming_', 'readable_', 'source_spacing', 'proven_return_')),
+    ):
+        if any(term in name for term in terms):
+            return group
+    return 'control_effects_errors'
+
+
+def load_cross_optimization_baseline(path):
+    data = json.loads(path.read_text())
+    if data['schema_version'] != 1:
+        raise ValueError('unsupported cross-optimization baseline schema')
+    profiles = {}
+    for row in data['profiles']:
+        key = profile_key(row)
+        if key in profiles or row['status'] not in ('compiler_sensitive', 'cross_level_limit'):
+            raise ValueError('invalid or repeated cross-optimization baseline profile')
+        profiles[key] = row
+    return profiles
+
+
+def run_cross_optimization(args):
+    baseline = load_cross_optimization_baseline(CROSS_OPT_BASELINE)
+    cases = cross_optimization_cases()
+    results = []
+    for name, source, driver, vector3 in cases:
+        for debug in (0, 2):
+            for optimization in (0, 1, 2):
+                for output_optimization in (0, 1, 2):
+                    key = (name, optimization, output_optimization, debug)
+                    row = check(args, name, source, driver, optimization, debug,
+                                integer=name == 'integer_literals', output_optimization=output_optimization,
+                                vector3=vector3, baseline=baseline.get(key))
+                    results.append(row)
+    counts = dict(collections.Counter(row['status'] for row in results))
+    missing = sorted(set(baseline) - {profile_key(row) for row in results})
+    summary = dict(schema_version=1, cases=len(cases), total=len(results), status=counts,
+                   improvements=[dict(zip(PROFILE_FIELDS, profile_key(row)), previous=row['improved_from'])
+                                 for row in results if 'improved_from' in row],
+                   unexercised_baseline_profiles=missing,
+                   groups={group: dict(collections.Counter(row['status'] for row in results if row['group'] == group))
+                           for group in sorted({row['group'] for row in results})},
+                   baseline_sha256=hashlib.sha256(CROSS_OPT_BASELINE.read_bytes()).hexdigest(),
+                   tools={name: dict(path=str(getattr(args, name)),
+                                     sha256=hashlib.sha256(getattr(args, name).read_bytes()).hexdigest())
+                          for name in ('compiler', 'vm', 'lifter')})
+    (args.work / 'results.json').write_text(json.dumps(results, ensure_ascii=True, indent=2), encoding='utf-8')
+    (args.work / 'summary.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding='utf-8')
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    return bool(counts.get('failed') or missing)
+
+
+def main():
+    sys.stdout.reconfigure(encoding='utf-8')
+    parser = argparse.ArgumentParser(description=__doc__)
+    for option in ('compiler', 'vm', 'lifter', 'work'):
+        parser.add_argument('--' + option, type=pathlib.Path, required=True)
+    parser.add_argument('--cross-optimization', action='store_true',
+                        help='run the O0/O1/O2 input/output matrix at g0/g2; exact reviewed limits stay distinct from passes')
+    args = parser.parse_args()
+    args.work.mkdir(parents=True, exist_ok=True)
+    if args.cross_optimization:
+        return run_cross_optimization(args)
+    results = []
+    for name, (source, driver) in CASES.items():
+        for debug in (0, 2):
+            for optimization in (0, 1, 2):
+                results.append(check(args, name, source, driver, optimization, debug,
+                                     integer=name == 'integer_literals'))
+    # Native vector FASTCALL and ordinary CALL branches must stay distinct at each compiler level.
+    source = (ROOT / 'docs/failure_fixtures/vector_mixed_call_paths.luau').read_text()
+    driver = (ROOT / 'docs/failure_fixtures/vector_mixed_call_paths.driver.luau').read_text()
+    for optimization in (0, 1, 2):
+        for debug in (0, 1, 2):
+            results.append(check(args, 'vector_mixed_call_paths_same_opt', source, driver,
+                                 optimization, debug, vector3=True))
+    for path in sorted((ROOT / '_harness/_bugs').glob('C*.luau')):
+        if '.dec.' in path.name:
+            continue
+        for optimization in (0, 1, 2):
+            results.append(check(args, path.stem, path.read_text(encoding='utf-8-sig'), '', optimization, 1))
+    for name, source, driver in [
+        ('vector_environment', 'return function() return vector.create(1,2,3) end',
+         'getfenv(f).vector={create=function() return "fake" end}; print(type(f()),f())'),
+        ('vector_nested_environment', 'local createVector=7; return function(n) return function() return vector.create(1,2,3),createVector+n end end',
+         'local g=f(2); getfenv(g).vector={create=function() return "fake" end}; print(type(g()),g())'),
+    ]:
+        for output_optimization in (0, 1, 2):
+            results.append(check(args, name, source, driver, 2, 2,
+                                 output_optimization=output_optimization))
+    for name, (source, driver) in VECTOR3_CASES.items():
+        for debug in (0, 2):
+            for output_optimization in (0, 1, 2):
+                results.append(check(args, name, source, driver, 2, debug,
+                                     output_optimization=output_optimization, vector3=True))
+    # A closure with no upvalue left for the constructor, in a script that
+    # replaces `vector` through `_G.getfenv`: the folded constant has no
+    # spelling that ignores the environment.
+    captured = [f'l{i}' for i in range(200)]
+    vector_getfenv_member = (
+        f'return function(...) local {", ".join(captured)} = ... '
+        'return function() _G.getfenv().vector = {create = function() return "fake" end} '
+        f'return vector.create(1, 2, 3), {" + ".join(captured)} end end')
+    for output_optimization in (0, 1, 2):
+        results.append(check(args, 'vector_getfenv_member', vector_getfenv_member,
+                             'local t = {} for i = 1, 200 do t[i] = i end local g = f(table.unpack(t)) '
+                             'local v, n = g() print(type(v), v, n)', 2, 0,
+                             output_optimization=output_optimization,
+                             refusal='headroom for the vector constructor'))
+    def abc(op, a=0, b=0, c=0):
+        return op | (a << 8) | (b << 16) | (c << 24)
+    def chunk(words):
+        return bytes([6,3,0,0,1,3,0,0,0,0,0,len(words)]) + b''.join(struct.pack('<I', word) for word in words) + bytes(7)
+    for name, words, driver in [
+        ('LOADB_skip', [abc(3,b=1,c=1), abc(4,b=5), abc(22,b=2)], 'print(f)'),
+        ('SETLIST_sparse', [abc(53),0,abc(4,a=1,b=42),abc(55,b=1,c=2),5,abc(22,b=2)], 'print(f[1],f[5])'),
+    ]:
+        results.append(check(args, name, '-- Bytecode tu tao: xem script sinh instruction.', driver, 1, 1, chunk(words)))
+    # Both VM loader template tags initialize absent values to number zero.
+    for tag in (5, 8):
+        words = [abc(54, b=1), abc(22, b=2)]
+        data = (bytes([9, 3, 1, 5]) + b'field' + bytes([0, 1, 1, 0, 0, 0, 0, 0, 2])
+                + b''.join(struct.pack('<I', word) for word in words)
+                + bytes([2, 3, 1, tag, 1, 0])
+                + (struct.pack('<i', -1) if tag == 8 else b'') + bytes(6))
+        results.append(check(args, f'table_template_{tag}', '-- VM template with zero field',
+                             'print(f.field,type(f.field))', 1, 1, data))
+    # NAMECALL with a method name no identifier spells (the VM takes any
+    # string): it reads the object and looks the method up after the
+    # arguments, an open last one included, which `object[name](object, ...)`
+    # would not; arguments that reassign a captured object change the call.
+    namecall = ('local o = setmetatable({}, {__index = function(_, k) print("lookup", k) '
+                'return function(self, ...) print("call", ...) return "r1", "r2" end end}) '
+                'local function args() print("arg") return 1, 2 end '
+                'return function() o:bad_nam(args()); print(o:bad_nam(0, args())); o:bad_nam("x") end')
+    namecall_receiver = ('local meta = {__index = function(_, k) return function(self, ...) print("call", self.name, ...) end end} '
+                         'return function() local current = setmetatable({name = "old"}, meta) '
+                         'local function args() current = setmetatable({name = "new"}, meta) return 1, 2 end '
+                         'current:bad_nam(args()); print(current.name) end')
+    # NAMECALL keeps the receiver before the lookup, which an `__index` may
+    # follow by changing the captured object.
+    namecall_lookup_changes_receiver = (
+        'local meta = {} '
+        'return function() local o = setmetatable({name = "old"}, meta) '
+        'local swap = setmetatable({name = "new"}, meta) '
+        'meta.__index = function() o = swap return function(self, ...) print("call", self.name, ...) end end '
+        'local function args() return 1, 2 end o:bad_nam(args()) end')
+    # A global no identifier spells is read from the environment by key,
+    # through the global `getfenv`, which a parameter must not shadow (its
+    # name survives at -g2), and never as a `function` statement's name.
+    global_name = 'return function() return weird_name, 1 end'
+    global_name_shadowed = 'return function(getfenv) return weird_name, getfenv end'
+    global_function_name = 'function weird_name() return 42 end return function() return weird_name() end'
+    # `getfenv(1)["name"]` would call the `getfenv` of the environment the
+    # script installs itself.
+    global_name_environment = (
+        'return function() setfenv(1, {weird_name = 42, '
+        'getfenv = function() return {weird_name = 99} end}) return weird_name end')
+    # A userdata's `__namecall` answers NAMECALL, never an indexed call.
+    namecall_userdata = (
+        'local o = newproxy(true) getmetatable(o).__namecall = function(self, ...) print("namecall", ...) end '
+        'getmetatable(o).__index = function() return function(self, ...) print("index", ...) end end '
+        'return function() o:bad_nam(1, 2) end')
+    # Only `0 / 0` and `-(0 / 0)` spell a NaN; `buffer` shows the payload.
+    nan_payload = 'return function() return 1.25 end'
+    nan_driver = ('local b = buffer.create(8) buffer.writef64(b, 0, f()) '
+                  'print(string.format("%08x%08x", buffer.readu32(b, 4), buffer.readu32(b, 0)))')
+    no_method_spelling = 'a method name no identifier spells'
+    for name, source, driver, spelled, patched, debug, refusal in [
+        ('namecall_name', namecall, 'f()', b'bad_nam', b'bad nam', 1, no_method_spelling),
+        ('namecall_captured_receiver', namecall_receiver, 'f()', b'bad_nam', b'bad nam', 1, no_method_spelling),
+        ('namecall_lookup_changes_receiver', namecall_lookup_changes_receiver, 'f()', b'bad_nam', b'bad nam', 1,
+         no_method_spelling),
+        ('namecall_userdata', namecall_userdata, 'f()', b'bad_nam', b'bad nam', 1, no_method_spelling),
+        ('global_name', global_name, 'getfenv(f)["bad name!!"] = 73; print(f())', b'weird_name', b'bad name!!', 1,
+         None),
+        ('global_name_shadowed', global_name_shadowed, 'getfenv(f)["bad name!!"] = 73; print(f(9))',
+         b'weird_name', b'bad name!!', 2, None),
+        ('global_function_name', global_function_name, 'print(f())', b'weird_name', b'bad name!!', 1, None),
+        ('global_name_environment', global_name_environment, 'print(f())', b'weird_name', b'bad name!!', 1,
+         'a global name no identifier spells'),
+        ('nan_payload', nan_payload, nan_driver, struct.pack('<d', 1.25),
+         struct.pack('<Q', 0x7ff8000000001234), 1, 'a NaN constant whose payload'),
+        # From -O1 `type(x)` runs the builtin by id (FASTCALL); only the
+        # fallback names it, so another name has no source spelling.
+        ('fastcall_renamed_builtin', 'return function(x) return type(x) end', ERROR_REPORTER + 'report(pcall(f, 1))',
+         b'type', b'typ ', 1, 'a builtin call names another function'),
+        # From -O1 `pairs(t)` prepares a loop that iterates the table itself
+        # with the standard environment, whatever the generator is called.
+        ('forgprep_renamed_pairs', 'return function(t) local n = 0 for _, v in pairs(t) do n += v end return n end',
+         ERROR_REPORTER + 'report(pcall(f, {1, 2}))', b'pairs', b'pai s', 1, 'a loop prepared for'),
+    ]:
+        for optimization in (0, 1, 2):
+            directory = args.work / f'{name}.raw.O{optimization}'
+            directory.mkdir(parents=True, exist_ok=True)
+            (directory / 'input.luau').write_text(source, encoding='utf-8')
+            compile_source(args, directory / 'input.luau', directory / 'input.bc', optimization, debug)
+            data = (directory / 'input.bc').read_bytes()
+            assert spelled in data, (name, optimization)
+            data = data.replace(spelled, patched)
+            results.append(check(args, name, f'-- {patched!r}: bytecode patched from the source',
+                                 driver, optimization, debug, data, refusal=refusal))
+    (args.work / 'results.json').write_text(json.dumps(results, ensure_ascii=True, indent=2), encoding='utf-8')
+    counts = collections.Counter(result['status'] for result in results)
+    failed = counts['failed']
+    print(f'Tổng: {len(results)}; executable pass: {counts["passed"]}; '
+          f'expected refusal: {counts["expected_refusal"]}; fail: {failed}')
+    return bool(failed)
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

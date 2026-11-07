@@ -1,0 +1,222 @@
+{
+  "schema": "tovek-wasm-samples/1",
+  "about": "Sample inputs for Tovek in the browser. native = the CLI's own output for the same input and script name (sha256 of the UTF-8 source without the trailing newline the CLI prints).",
+  "compiled_with": "luau-compile --binary -O2 -g1",
+  "native_cli": {
+    "sha256": "c964a5cb43bb94dbdc0daea574856cc3d944a5cbaecd63c8f7ba1f8a9a8d910a",
+    "raw": "luau-lifter <file> --script-name <name>",
+    "text": "luau-lifter decompile-folder <folder holding the file>"
+  },
+  "samples": [
+    {
+      "id": "SpawnShield",
+      "title": "SpawnShield",
+      "about": "Our own sample: a spawn shield with a helper Luau inlines twice and frames(1) folded to a number.",
+      "name": "SpawnShield.lua",
+      "file": "SpawnShield.luaubc",
+      "form": "raw",
+      "key": 1,
+      "bytes": 1684,
+      "sha256": "7666e7ffda921a9cc80f00de50f8d1287f83d613a0daf253691c6778ce253993",
+      "bytecode_version": 14,
+      "source_file": "SpawnShield.luau",
+      "source_lines": 72,
+      "source_nonblank": 62,
+      "origin": {
+        "repository": "github.com/Kiet1308/Tovek",
+        "license": "MIT",
+        "author": "Tovek",
+        "url": null,
+        "commit": null,
+        "path": null,
+        "license_file": null
+      },
+      "native": {
+        "sha256": "4cee5af9aa910b3cb76ba194756a067bac0efa98282f8baf7a1a83b2d3719f55",
+        "bytes": 1692,
+        "lines": 76,
+        "nonblank": 58
+      }
+    },
+    {
+      "id": "SpawnShield.client",
+      "title": "SpawnShield (Roblox client bytecode)",
+      "about": "The same bytecode with its opcodes encoded the way the Roblox client stores them, saved as text: comment lines, then base64.",
+      "name": "SpawnShield.lua",
+      "file": "SpawnShield.client.txt",
+      "form": "text",
+      "key": 203,
+      "bytes": 2305,
+      "sha256": "4ce7880e67d3f99ed5f7240cdbc19c93e32e1e24b91d4ed2aa7fa530ccd68133",
+      "bytecode_version": 14,
+      "source_file": "SpawnShield.luau",
+      "source_lines": 72,
+      "source_nonblank": 62,
+      "origin": {
+        "repository": "github.com/Kiet1308/Tovek",
+        "license": "MIT",
+        "author": "Tovek",
+        "url": null,
+        "commit": null,
+        "path": null,
+        "license_file": null
+      },
+      "native": {
+        "sha256": "4cee5af9aa910b3cb76ba194756a067bac0efa98282f8baf7a1a83b2d3719f55",
+        "bytes": 1692,
+        "lines": 76,
+        "nonblank": 58
+      }
+    },
+    {
+      "id": "Store",
+      "title": "Rodux Store",
+      "about": "The Store class of Rodux, Roblox's state container.",
+      "name": "Store.lua",
+      "file": "Store.luaubc",
+      "form": "raw",
+      "key": 1,
+      "bytes": 4869,
+      "sha256": "6ac796cbf73bcf0b2d0af16cc5eff6331611bd434f7af077baab17cc8e30c426",
+      "bytecode_version": 14,
+      "source_file": "Store.luau",
+      "source_lines": 228,
+      "source_nonblank": 185,
+      "origin": {
+        "repository": "github.com/Roblox/rodux",
+        "license": "Apache-2.0",
+        "author": "Roblox",
+        "commit": "120e94ec609c4992c9f2da7c7ae45542b168fd25",
+        "path": "src/Store.lua",
+        "license_file": "licenses/Rodux.txt",
+        "url": "https://github.com/Roblox/rodux/blob/120e94ec609c4992c9f2da7c7ae45542b168fd25/src/Store.lua"
+      },
+      "native": {
+        "sha256": "c558d74c3f2f8cb199ccc125729bc776e578e4aafd8e7c32af5d3119b7df69c3",
+        "bytes": 4234,
+        "lines": 192,
+        "nonblank": 146
+      }
+    },
+    {
+      "id": "Signal",
+      "title": "Signal",
+      "about": "Signal from Sleitnick's RbxUtil: connections, Wait, Once and deferred firing.",
+      "name": "Signal.lua",
+      "file": "Signal.luaubc",
+      "form": "raw",
+      "key": 1,
+      "bytes": 4651,
+      "sha256": "be15cf7ce8c766037756918c2b972b87e1c190a13feb2639f28557c8bf5c97c9",
+      "bytecode_version": 14,
+      "source_file": "Signal.luau",
+      "source_lines": 432,
+      "source_nonblank": 369,
+      "origin": {
+        "repository": "github.com/Sleitnick/RbxUtil",
+        "license": "MIT",
+        "author": "Stephen Leitnick",
+        "commit": "31f9120fca021e3dec275b42bc7047d626962082",
+        "path": "modules/signal/init.luau",
+        "license_file": "licenses/RbxUtil.txt",
+        "url": "https://github.com/Sleitnick/RbxUtil/blob/31f9120fca021e3dec275b42bc7047d626962082/modules/signal/init.luau"
+      },
+      "native": {
+        "sha256": "c9fa2b5aee3b15f7cab0d68d60630412257c19898a6a85e1019ac7db1c68cb92",
+        "bytes": 4083,
+        "lines": 225,
+        "nonblank": 170
+      }
+    },
+    {
+      "id": "Trove",
+      "title": "Trove",
+      "about": "Trove from Sleitnick's RbxUtil: tracks objects and cleans them up together.",
+      "name": "Trove.lua",
+      "file": "Trove.luaubc",
+      "form": "raw",
+      "key": 1,
+      "bytes": 6347,
+      "sha256": "461ef073279492b5d342a19dfd79957e1ce1a101a0bea740ad62b4073f94bc82",
+      "bytecode_version": 14,
+      "source_file": "Trove.luau",
+      "source_lines": 787,
+      "source_nonblank": 674,
+      "origin": {
+        "repository": "github.com/Sleitnick/RbxUtil",
+        "license": "MIT",
+        "author": "Stephen Leitnick",
+        "commit": "31f9120fca021e3dec275b42bc7047d626962082",
+        "path": "modules/trove/init.luau",
+        "license_file": "licenses/RbxUtil.txt",
+        "url": "https://github.com/Sleitnick/RbxUtil/blob/31f9120fca021e3dec275b42bc7047d626962082/modules/trove/init.luau"
+      },
+      "native": {
+        "sha256": "3788054877a490c07b9afae6ca34f5b5eacc3f57f9e33f67833c2f7afdbaaf7c",
+        "bytes": 5143,
+        "lines": 254,
+        "nonblank": 197
+      }
+    },
+    {
+      "id": "ClickToMoveController",
+      "title": "ClickToMoveController",
+      "about": "Roblox's default click-to-move controller, part of the PlayerModule every game ships with.",
+      "name": "ClickToMoveController.lua",
+      "file": "ClickToMoveController.luaubc",
+      "form": "raw",
+      "key": 1,
+      "bytes": 35177,
+      "sha256": "de684c450be47df1e29222e671442b096972210a498de1a67f4141cb598fda27",
+      "bytecode_version": 14,
+      "source_file": "ClickToMoveController.luau",
+      "source_lines": 1239,
+      "source_nonblank": 1059,
+      "origin": {
+        "repository": "github.com/MaximumADHD/Roblox-Client-Tracker",
+        "license": null,
+        "author": "Roblox",
+        "commit": "45007a62fecfc910f099af1497e8a2ef945b95e0",
+        "path": "scripts/PlayerScripts/StarterPlayerScripts/PlayerModule.module/ControlModule/ClickToMoveController.lua",
+        "license_file": null,
+        "url": "https://github.com/MaximumADHD/Roblox-Client-Tracker/blob/45007a62fecfc910f099af1497e8a2ef945b95e0/scripts/PlayerScripts/StarterPlayerScripts/PlayerModule.module/ControlModule/ClickToMoveController.lua"
+      },
+      "native": {
+        "sha256": "2413a21260b1b54711b6206831ee1e592b5b0ed8285c310d524ae0f6f293438a",
+        "bytes": 31903,
+        "lines": 1312,
+        "nonblank": 1033
+      }
+    },
+    {
+      "id": "Promise",
+      "title": "Promise",
+      "about": "evaera's Promise library, one of the most used modules on Roblox.",
+      "name": "Promise.lua",
+      "file": "Promise.luaubc",
+      "form": "raw",
+      "key": 1,
+      "bytes": 34966,
+      "sha256": "187dccea93dde7abccd8d9224ca34b5b4af59990aa35feebc779c2f7b32264a9",
+      "bytecode_version": 14,
+      "source_file": "Promise.luau",
+      "source_lines": 1982,
+      "source_nonblank": 1593,
+      "origin": {
+        "repository": "github.com/evaera/roblox-lua-promise",
+        "license": "MIT",
+        "author": "Eryn L. K.",
+        "commit": "031d429c82ee458a849e79fa523523bd349d7695",
+        "path": "lib/init.lua",
+        "license_file": "licenses/Promise.txt",
+        "url": "https://github.com/evaera/roblox-lua-promise/blob/031d429c82ee458a849e79fa523523bd349d7695/lib/init.lua"
+      },
+      "native": {
+        "sha256": "b7f77175d27da6041157207a370737a6934be804ff9a2ee1e3e7c964db69ac61",
+        "bytes": 24911,
+        "lines": 1081,
+        "nonblank": 852
+      }
+    }
+  ]
+}
