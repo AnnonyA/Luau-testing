@@ -1,6 +1,6 @@
 # Tovek Studio
 
-An open-source Luau bytecode decompiler based on [Tovek](https://github.com/Kiet1308/Tovek), with a local web interface, CLI, and HTTP API.
+An open-source Luau bytecode decompiler based on [Tovek](https://github.com/Kiet1308/Tovek), with a browser decompiler, local web interface, CLI, and HTTP API.
 
 ## Get started
 
@@ -25,15 +25,18 @@ The server also provides `POST /decompile/raw` (binary bytecode), `POST /decompi
 ```sh
 cargo test --workspace --all-targets
 python3 -m unittest discover -s scripts -p 'test_*.py'
+node scripts/build_site.mjs
 node --test web-server/ui/studio.test.mjs
-node --test scripts/test_site.mjs
+node --test scripts/test_site.mjs scripts/test_decompiler.mjs scripts/test_browser_engine.mjs scripts/test_browser_worker.mjs
 ```
 
 To work on the interface alone, run `node web-server/ui/dev-server.mjs`. The preview listens on port 4173 and proxies requests to the local Rust server on port 3000. Decompilation still requires the Rust server.
 
-## Project site
+## Browser decompiler
 
-GitHub Pages hosts the static project site, not the decompiler server. In repository **Settings → Pages**, set the source to **GitHub Actions**. Once this workflow is merged into `main`, changes to `site/` deploy automatically. If Pages is enabled after the merge, run **Deploy project site** manually from the Actions tab.
+The [project site](https://annonya.github.io/Luau-testing/) runs Tovek in a Web Worker; bytecode stays in your browser. The bundled engine is the upstream V2.7 WebAssembly build from commit `bd8055d`, not a build of this fork, so it may produce different results from the native CLI. A browser with WebAssembly exception handling is required.
+
+To preview the site locally, run `node scripts/build_site.mjs` and serve `dist/site` with a static HTTP server. The Pages workflow builds the site and includes the checked-in engine and sample when it deploys from `main`.
 
 ## Roadmap
 

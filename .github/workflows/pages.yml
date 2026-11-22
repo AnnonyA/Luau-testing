@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      - 'scripts/build_site.mjs'
+      - 'docs/assets/v26/tovek/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -25,9 +27,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: node scripts/build_site.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: dist/site
       - uses: actions/deploy-pages@v4
         id: deployment
