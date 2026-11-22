@@ -78,8 +78,8 @@ struct FolderArgs {
     /// Faster/cleaner output, but changes behavior when either operand is NaN.
     #[arg(long)]
     assume_no_nan: bool,
-    /// Synthesize equivalent fixed-count arithmetic loops (experimental; source loop unknown).
-    #[arg(long)]
+    /// Synthesize equivalent fixed-count loops (experimental; original source unknown).
+    #[arg(long, visible_alias = "synthesize-fixed-loops")]
     synthesize_arithmetic_loops: bool,
     /// Fail closed when source-like structuring cannot avoid synthetic control
     /// (the folder driver is already strict by default).
@@ -162,8 +162,8 @@ struct ValidateArgs {
     /// Default is off to preserve exact NaN semantics.
     #[arg(long)]
     assume_no_nan: bool,
-    /// Synthesize equivalent fixed-count arithmetic loops (experimental; source loop unknown).
-    #[arg(long)]
+    /// Synthesize equivalent fixed-count loops (experimental; original source unknown).
+    #[arg(long, visible_alias = "synthesize-fixed-loops")]
     synthesize_arithmetic_loops: bool,
     /// Fail closed when source-like structuring cannot avoid synthetic control
     /// (the folder driver is already strict by default).
@@ -309,17 +309,15 @@ mod policy_tests {
     #[test]
     fn loop_synthesis_is_explicit_in_folder_and_validation_cli() {
         for command in ["decompile-folder", "validate-folder"] {
-            for enabled in [false, true] {
+            for option in [None, Some("--synthesize-arithmetic-loops"), Some("--synthesize-fixed-loops")] {
                 let mut argv = vec!["luau-lifter", command, "src", "out"];
-                if enabled {
-                    argv.push("--synthesize-arithmetic-loops");
-                }
+                if let Some(flag) = option { argv.push(flag); }
                 let parsed = Cli::try_parse_from(argv).unwrap();
                 let actual = match parsed.command {
                     Command::DecompileFolder(args) => args.synthesize_arithmetic_loops,
                     Command::ValidateFolder(args) => args.synthesize_arithmetic_loops,
                 };
-                assert_eq!(actual, enabled);
+                assert_eq!(actual, option.is_some());
             }
         }
     }
@@ -379,7 +377,7 @@ mod policy_tests {
 const SINGLE_FILE_USAGE: &str = "usage: luau-lifter <bytecode file> [-e] [--script-name NAME] \
 [--stats-json PATH] [--style default|compact] [--strict-no-synthetic-control] \
 [--allow-certified-dispatcher] [--dont-reuse-var] [--no-synth-helpers] [--assume-no-nan] \
-[--assume-standard-libraries] [--synthesize-arithmetic-loops]\n       luau-lifter --help";
+[--assume-standard-libraries] [--synthesize-fixed-loops]\n       luau-lifter --help";
 
 /// Report a bad invocation and exit 2. The process-wide quiet panic hook
 /// swallows panic messages, so an `expect` here exited 101 with nothing said.
@@ -408,7 +406,7 @@ fn run_single_file() {
             "--no-synth-helpers" => options.no_synth_helpers = true,
             "--assume-no-nan" => options.assume_no_nan = true,
             "--assume-standard-libraries" => options.assume_standard_libraries = true,
-            "--synthesize-arithmetic-loops" => options.synthesize_arithmetic_loops = true,
+            "--synthesize-arithmetic-loops" | "--synthesize-fixed-loops" => options.synthesize_arithmetic_loops = true,
             "--allow-certified-dispatcher" => {
                 options.control_flow_policy =
                     luau_lifter::ControlFlowOutputPolicy::AllowCertifiedDispatcher;

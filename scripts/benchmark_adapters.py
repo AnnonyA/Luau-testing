@@ -10,7 +10,8 @@ import time
 import urllib.error
 import urllib.request
 
-ENDPOINT = 'https://api.lua.expert/decompile'
+ENDPOINT = 'https://api.lua.expert/v1/decompile'
+LUACID_ENDPOINT = 'https://api.luacid.dev/decompile'
 MAX_RESPONSE = 16 * 1024 * 1024
 
 
@@ -41,15 +42,19 @@ class Expert:
                              response_contract='plain text; HTTP 200 is not a success oracle',
                              timing='HTTPS request wall time including network/TLS, excluding rate-limit wait')
 
+    def request_data(self, bytecode):
+        return (json.dumps({'script': base64.b64encode(bytecode.read_bytes()).decode('ascii')}).encode(),
+                'application/json')
+
     def invoke(self, bytecode, retry=True):
-        payload = json.dumps({'script': base64.b64encode(bytecode.read_bytes()).decode('ascii')}).encode()
+        payload, content_type = self.request_data(bytecode)
         attempts, body = [], b''
         for number in range(3 if retry else 1):
             time.sleep(max(0, self.next_request - time.monotonic()))
             start = time.perf_counter()
             self.next_request = time.monotonic() + self.interval
-            request = urllib.request.Request(ENDPOINT, data=payload, headers={
-                'Content-Type': 'application/json', 'User-Agent': 'Tovek-public-benchmark/1.0'})
+            request = urllib.request.Request(self.identity['endpoint'], data=payload, headers={
+                'Content-Type': content_type, 'User-Agent': 'Tovek-public-benchmark/1.0'})
             status, headers, error = None, {}, None
             try:
                 with self.opener.open(request, timeout=self.timeout) as response:
@@ -76,6 +81,19 @@ class Expert:
                 except ValueError: delay = 10
                 time.sleep(delay)
         return dict(status=outcome, attempts=attempts, output_sha256=digest(body)), body
+
+
+class Luacid(Expert):
+    def __init__(self, requests_per_minute=30, timeout=30):
+        # The documented keyless tier is limited; use a conservative cap.
+        if not 1 <= requests_per_minute <= 30:
+            raise ValueError('Luacid benchmark rate must be 1..30 requests/minute')
+        super().__init__(requests_per_minute, timeout)
+        self.identity.update(endpoint=LUACID_ENDPOINT,
+                             response_contract='raw bytecode in; plain text out; HTTP 200 is not a success oracle')
+
+    def request_data(self, bytecode):
+        return bytecode.read_bytes(), 'application/octet-stream'
 
 
 class Native:

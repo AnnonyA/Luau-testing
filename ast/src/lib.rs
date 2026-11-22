@@ -92,6 +92,7 @@ pub mod register_pressure;
 pub mod return_types;
 pub mod rehoist_constants;
 pub mod reroll_arithmetic;
+pub mod reroll_method_calls;
 mod repeat;
 pub mod replace_locals;
 pub mod library_constants;

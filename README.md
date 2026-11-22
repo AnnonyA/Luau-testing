@@ -18,6 +18,11 @@ For the CLI:
 cargo run --release -p luau-lifter -- --help
 ```
 
+The native CLI supports the experimental `--synthesize-fixed-loops` option (also
+available as `--synthesize-arithmetic-loops`). It emits clearly labelled inferred
+loops for a few verified patterns; these are not claims about the original source.
+See [`benchmarks/fidelity/`](benchmarks/fidelity/) for source-similarity and semantic tests.
+
 The server also provides `POST /decompile/raw` (binary bytecode), `POST /decompile` (base64), and `POST /decompile/batch`. Luau clients are in the repository root.
 
 ## Tests
@@ -37,6 +42,16 @@ To work on the interface alone, run `node web-server/ui/dev-server.mjs`. The pre
 The [project site](https://annonya.github.io/Luau-testing/) runs Tovek in a Web Worker; bytecode stays in your browser. The bundled engine is the upstream V2.7 WebAssembly build from commit `bd8055d`, not a build of this fork, so it may produce different results from the native CLI. A browser with WebAssembly exception handling is required.
 
 To preview the site locally, run `node scripts/build_site.mjs` and serve `dist/site` with a static HTTP server. The Pages workflow builds the site and includes the checked-in engine and sample when it deploys from `main`.
+
+## Competitive benchmark
+
+A small original source, its compiled bytecode, the browser output, and the local observation are in `benchmarks/competitive/`. To reproduce the comparison, build `luau-compile` and `scripts/benchmark_vm` using Luau commit `c2ec0d4e5ca50796ba174a7565298f59aa572268`, then run:
+
+```sh
+python3 scripts/competitive_compare.py --compiler /path/to/luau-compile --vm /path/to/benchmark-vm --out out/competitive --online
+```
+
+`--online` sends **only the public fixture bytecode** to Luacid and lua.expert. Omit it for an offline run; add `--native target/release/luau-lifter` to compare this fork's native build too. The command preserves raw responses and checks recompilation and sandboxed execution. One fixture is not enough to rank decompilers; never send private code to third-party APIs.
 
 ## Roadmap
 

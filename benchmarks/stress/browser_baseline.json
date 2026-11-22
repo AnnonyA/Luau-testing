@@ -1,0 +1,603 @@
+{
+  "schema": "tovek-large-stress-v1",
+  "engine": "upstream-browser-wasm-bd8055d",
+  "engine_sha256": "6d4216df01454ee8cd8682e225385c7d1e6a2e1277f04754921bfb2772d92883",
+  "compiler_sha256": "bd578dcffa6f00872c8ff946fd710b44387181c821c0f2cb46c4d16cfce54a98",
+  "vm_sha256": "3383a3e4dfed57a8999cb6c123e1203577a77a738d8eeb058c95e4b6c6e081e1",
+  "compiler_revision_expected": "c2ec0d4e5ca50796ba174a7565298f59aa572268",
+  "compiler_revision_verified": false,
+  "cases": [
+    {
+      "case": "assignment_order",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "64532efaebd0b8938fa0c40d20b79044ffeba75591a1671c3a9de0c83f8cd8a6",
+      "input_sha256": "b9f43c705c942496860e68c0982b5c6327b9d8cb26a4e766971fb49453708a9d",
+      "input_bytes": 3580,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "52ad2844d4314759359b7ef82762e6bc3a4b810683113f8a351178220cbf2786",
+      "original_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae",
+      "rebuilt_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae"
+    },
+    {
+      "case": "assignment_order",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "64532efaebd0b8938fa0c40d20b79044ffeba75591a1671c3a9de0c83f8cd8a6",
+      "input_sha256": "1cfbd00733a479a061050e41b9c578ef8bb40106e352ecb984aea4a8f27a5f1e",
+      "input_bytes": 10794,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "c1f93f0e3adb6156ce7ac46d997da82a4f75ed5720275d00088312b5388958fd",
+      "original_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae",
+      "rebuilt_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae"
+    },
+    {
+      "case": "assignment_order",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "64532efaebd0b8938fa0c40d20b79044ffeba75591a1671c3a9de0c83f8cd8a6",
+      "input_sha256": "7f22fab270c1ea7edceccb242849c43ac6f4f2c8ecd1907e3118231f635c0d25",
+      "input_bytes": 4655,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "52ad2844d4314759359b7ef82762e6bc3a4b810683113f8a351178220cbf2786",
+      "original_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae",
+      "rebuilt_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae"
+    },
+    {
+      "case": "assignment_order",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "64532efaebd0b8938fa0c40d20b79044ffeba75591a1671c3a9de0c83f8cd8a6",
+      "input_sha256": "d182562f05cc4bb7c5d51892cb907d1f1f13d13e34923a88d2b3f9d0eb295571",
+      "input_bytes": 10872,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "c1f93f0e3adb6156ce7ac46d997da82a4f75ed5720275d00088312b5388958fd",
+      "original_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae",
+      "rebuilt_stdout_sha256": "271c5a19c02267bce1399173b90f137bfb6b15a006c5b96aa2975f2220e727ae"
+    },
+    {
+      "case": "closures",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "b5abe9503287b6febb5a243ce2a5cfe27895f15f1504491c0d907f875d7f0e0d",
+      "input_sha256": "822cd14414eb1ce2527f95c9359552fbdee50c50b970efd6f8cb08e09689f96b",
+      "input_bytes": 7203,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "31b44fcbea4788b40bdaf5e594c060efbd9a21ad1e0c095ff405879721dc1ad2",
+      "original_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447",
+      "rebuilt_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447"
+    },
+    {
+      "case": "closures",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "b5abe9503287b6febb5a243ce2a5cfe27895f15f1504491c0d907f875d7f0e0d",
+      "input_sha256": "b7fb09d0320f8f5bcd4c395d66fa8c3a9cb4ce8135527cb435c830d3cf1857cc",
+      "input_bytes": 14634,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "578c1150a4f1580f6bf4a186007a413b1d894d115e51c1578e07eb07d9a41925",
+      "original_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447",
+      "rebuilt_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447"
+    },
+    {
+      "case": "closures",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "b5abe9503287b6febb5a243ce2a5cfe27895f15f1504491c0d907f875d7f0e0d",
+      "input_sha256": "a18ce2249638c123339982c28655a89fa6b076d46ad19ea5d8ed3ea2bec6f141",
+      "input_bytes": 9016,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "31b44fcbea4788b40bdaf5e594c060efbd9a21ad1e0c095ff405879721dc1ad2",
+      "original_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447",
+      "rebuilt_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447"
+    },
+    {
+      "case": "closures",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "b5abe9503287b6febb5a243ce2a5cfe27895f15f1504491c0d907f875d7f0e0d",
+      "input_sha256": "7491d58594142311191c89bcf9070812be81f19201e57a7b1b8e4f01c853e1bb",
+      "input_bytes": 16446,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "578c1150a4f1580f6bf4a186007a413b1d894d115e51c1578e07eb07d9a41925",
+      "original_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447",
+      "rebuilt_stdout_sha256": "5fa5acdf2323db7563962ba679b49d9b959096080d3d6a6fdde34b5b08262447"
+    },
+    {
+      "case": "constructors",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "f4cade27d56259356dba638812cd9f243dd861887431e34db4d38665bce8fbb7",
+      "input_sha256": "c26403a37839e09423643b03a51e11953e130859c3f1c0fd199ef6d3fb0a336f",
+      "input_bytes": 5125,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "4f7a5aabec7a449a366fb7584106380c8912d3d7af9b5dbcd6d51435cb8027ce",
+      "original_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6",
+      "rebuilt_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6"
+    },
+    {
+      "case": "constructors",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "f4cade27d56259356dba638812cd9f243dd861887431e34db4d38665bce8fbb7",
+      "input_sha256": "6fc6494afa3139fac4e0eaba5dd83d73e229632c927942af4699adf30cab1190",
+      "input_bytes": 11187,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "8adfb81acdf0aadd3c9df0786b2ce685d4353f1e34bfb9a500921bdb75b5b31f",
+      "original_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6",
+      "rebuilt_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6"
+    },
+    {
+      "case": "constructors",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "f4cade27d56259356dba638812cd9f243dd861887431e34db4d38665bce8fbb7",
+      "input_sha256": "399d6bb416f00a72941150d93f9e44ceb9aa289d819ceebd8c94051f18449a33",
+      "input_bytes": 5613,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "4f7a5aabec7a449a366fb7584106380c8912d3d7af9b5dbcd6d51435cb8027ce",
+      "original_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6",
+      "rebuilt_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6"
+    },
+    {
+      "case": "constructors",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "f4cade27d56259356dba638812cd9f243dd861887431e34db4d38665bce8fbb7",
+      "input_sha256": "9510bbdab4bf8d6f4863f1946dc256662102bf82477c1700714175a36a25bd14",
+      "input_bytes": 11425,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "8adfb81acdf0aadd3c9df0786b2ce685d4353f1e34bfb9a500921bdb75b5b31f",
+      "original_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6",
+      "rebuilt_stdout_sha256": "0cf59ac40b94218abdd7357eda89e285c2c1e264c013e2b92d2d5c080d34eea6"
+    },
+    {
+      "case": "control",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "e3946a7b307881bb0af9ea78ea7ca683be43bf440a8257f3d7d4dacb8b776987",
+      "input_sha256": "98d3d9b077c1512034a676ee683d4b9a58491d22136a3fd7fff4f760fcba67c5",
+      "input_bytes": 7301,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "179ad9c9587359e867cc1a06fb0c712beefc8171ef2bfff6c1e755f9e428c0e4",
+      "original_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59",
+      "rebuilt_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59"
+    },
+    {
+      "case": "control",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "e3946a7b307881bb0af9ea78ea7ca683be43bf440a8257f3d7d4dacb8b776987",
+      "input_sha256": "83459dda78f922aa92ee9b88fb11884d971d093ba64c192fcbf4839548c44aa2",
+      "input_bytes": 18302,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "1bdc9b58add75d572022f9521389d68f6fd93c86819585c4ea7ebb47bcc65448",
+      "original_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59",
+      "rebuilt_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59"
+    },
+    {
+      "case": "control",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "e3946a7b307881bb0af9ea78ea7ca683be43bf440a8257f3d7d4dacb8b776987",
+      "input_sha256": "5cacb916071c75a23c81df9f599824c1b5cf91fc16ed47e506f5c796ea6c0e75",
+      "input_bytes": 8023,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "179ad9c9587359e867cc1a06fb0c712beefc8171ef2bfff6c1e755f9e428c0e4",
+      "original_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59",
+      "rebuilt_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59"
+    },
+    {
+      "case": "control",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "e3946a7b307881bb0af9ea78ea7ca683be43bf440a8257f3d7d4dacb8b776987",
+      "input_sha256": "be64b63bd9ee7348799c60205ec9f45c3eb9a9daca61a4a838a4b6a4fdbe809f",
+      "input_bytes": 18880,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "1bdc9b58add75d572022f9521389d68f6fd93c86819585c4ea7ebb47bcc65448",
+      "original_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59",
+      "rebuilt_stdout_sha256": "f00299c0f2b203d09240883858f56ba507376c57a61935fb1ec3bc56b84d1c59"
+    },
+    {
+      "case": "mixed",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "f80a2f5f8b7a2220fe8c1b5c2ba21c43b1b473db4a0520859752b5298c95dcdd",
+      "input_sha256": "bc3dee6c4e85051e4b9c4b5e450071e5d3c04fc5942a70889e67c0f77cbcc56c",
+      "input_bytes": 19910,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "51a155baec7c5f15f18b7c0cf47ac4fa690c845b3403b9990f3f6cd57319793c",
+      "original_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372",
+      "rebuilt_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372"
+    },
+    {
+      "case": "mixed",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "f80a2f5f8b7a2220fe8c1b5c2ba21c43b1b473db4a0520859752b5298c95dcdd",
+      "input_sha256": "82b07aa75beb55bde59b13d744d6489020d8404996bcd858f4e8a4a38827c27a",
+      "input_bytes": 38352,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "913700256a992706a4c6056bc85b85ecf16d9ba68b01f7a8e2ce37bc584b2f63",
+      "original_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372",
+      "rebuilt_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372"
+    },
+    {
+      "case": "mixed",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "f80a2f5f8b7a2220fe8c1b5c2ba21c43b1b473db4a0520859752b5298c95dcdd",
+      "input_sha256": "8ee459c3722822b5b1b0c2bd66d693625c592a2292be9f2648f907cbc918f0c7",
+      "input_bytes": 24668,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "51a155baec7c5f15f18b7c0cf47ac4fa690c845b3403b9990f3f6cd57319793c",
+      "original_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372",
+      "rebuilt_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372"
+    },
+    {
+      "case": "mixed",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "f80a2f5f8b7a2220fe8c1b5c2ba21c43b1b473db4a0520859752b5298c95dcdd",
+      "input_sha256": "1f64fc6575a0b16ecef6dde9f01a5facc914022c073f0e97c6b369722ad0b518",
+      "input_bytes": 43645,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "913700256a992706a4c6056bc85b85ecf16d9ba68b01f7a8e2ce37bc584b2f63",
+      "original_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372",
+      "rebuilt_stdout_sha256": "0caf0adefb67de3afcc4b8b689076cfb2b96619fb6d4a085a0bb9464b13b5372"
+    },
+    {
+      "case": "packs",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "b2b7efe9f8dd887f188c2633b400e2a8a357d4042232748a219dc747ea2e9d6b",
+      "input_sha256": "434008c9cb3955e4c0d67b942944d3ccc9628f64e9fe7044354b3c895fb07b5d",
+      "input_bytes": 4453,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "b529d19184305269566ab82d24c4f9f4ff688bea3564fc33d8c6985ac1f231f0",
+      "original_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734",
+      "rebuilt_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734"
+    },
+    {
+      "case": "packs",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "b2b7efe9f8dd887f188c2633b400e2a8a357d4042232748a219dc747ea2e9d6b",
+      "input_sha256": "6e644ca52124ae1116f442a71120633eb46d7410139929cac84cd9d6a936caac",
+      "input_bytes": 11768,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "dfc435db5d869763bc630803cf9e815f04a7b89a50d4d1dbef915c877b9cf136",
+      "original_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734",
+      "rebuilt_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734"
+    },
+    {
+      "case": "packs",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "b2b7efe9f8dd887f188c2633b400e2a8a357d4042232748a219dc747ea2e9d6b",
+      "input_sha256": "d6b37a5c51903ebda5ea4d859e701e5bdea92f1406348acfb1c3fc03ac585f38",
+      "input_bytes": 5492,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "b529d19184305269566ab82d24c4f9f4ff688bea3564fc33d8c6985ac1f231f0",
+      "original_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734",
+      "rebuilt_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734"
+    },
+    {
+      "case": "packs",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "b2b7efe9f8dd887f188c2633b400e2a8a357d4042232748a219dc747ea2e9d6b",
+      "input_sha256": "f14c3389def455ba498be1d4111fa6d0974159f632eb55bdd2214e4a53975eb9",
+      "input_bytes": 12723,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "dfc435db5d869763bc630803cf9e815f04a7b89a50d4d1dbef915c877b9cf136",
+      "original_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734",
+      "rebuilt_stdout_sha256": "af6c1d009c138bcce2e8d07f791d1fb79936548bad6bcdf6d154619cc60ed734"
+    },
+    {
+      "case": "proxy",
+      "profile": {
+        "version": 9,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "ffc6faff74e0b3a1df22370928f2ddabf2308131248bebc693f5e952569e351d",
+      "input_sha256": "fd9f2807b999b4bd235f1c3a59bfe8342211821ea6707b684124abaf6affded0",
+      "input_bytes": 4217,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "74a15b0794ef499ae2cd07930b2ad7484180ce6408b3b2fe0e0ee42709b3c3bf",
+      "original_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04",
+      "rebuilt_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04"
+    },
+    {
+      "case": "proxy",
+      "profile": {
+        "version": 9,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "ffc6faff74e0b3a1df22370928f2ddabf2308131248bebc693f5e952569e351d",
+      "input_sha256": "4fff4aa7f5d42d1c6660bdcd33d4d57efcd8d969efb3715268672eef004b66bc",
+      "input_bytes": 11914,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "bb7e7f1cd40797262e8def895c5d55f643bef4b80ef26524b11585948e79b6ce",
+      "original_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04",
+      "rebuilt_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04"
+    },
+    {
+      "case": "proxy",
+      "profile": {
+        "version": 12,
+        "opt": 0,
+        "debug": 0
+      },
+      "source_sha256": "ffc6faff74e0b3a1df22370928f2ddabf2308131248bebc693f5e952569e351d",
+      "input_sha256": "861d0a5f647abea83e33616e3a01885b81190d85cb470ed596ce086c190251f1",
+      "input_bytes": 4903,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "74a15b0794ef499ae2cd07930b2ad7484180ce6408b3b2fe0e0ee42709b3c3bf",
+      "original_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04",
+      "rebuilt_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04"
+    },
+    {
+      "case": "proxy",
+      "profile": {
+        "version": 12,
+        "opt": 2,
+        "debug": 2
+      },
+      "source_sha256": "ffc6faff74e0b3a1df22370928f2ddabf2308131248bebc693f5e952569e351d",
+      "input_sha256": "3a51150808e1eafa4b737c4143d7b8da63c661801b9dc820741f5848e326fa25",
+      "input_bytes": 12522,
+      "decompile": {
+        "status": "output",
+        "exit": 0
+      },
+      "compiled": true,
+      "runtime_pass": true,
+      "output_sha256": "bb7e7f1cd40797262e8def895c5d55f643bef4b80ef26524b11585948e79b6ce",
+      "original_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04",
+      "rebuilt_stdout_sha256": "9e1f48d60125e30e79ae2a836d23554732350ca21bd5e414a742ecfcd3c8ab04"
+    }
+  ],
+  "mutation_controls": [
+    {
+      "case": "assignment_order",
+      "detected": true
+    },
+    {
+      "case": "closures",
+      "detected": true
+    },
+    {
+      "case": "constructors",
+      "detected": true
+    },
+    {
+      "case": "control",
+      "detected": true
+    },
+    {
+      "case": "mixed",
+      "detected": true
+    },
+    {
+      "case": "packs",
+      "detected": true
+    },
+    {
+      "case": "proxy",
+      "detected": true
+    }
+  ],
+  "limitations": "Five inputs per profile are not proof of equivalence. Compiler revision not verified by this runner.",
+  "notes": "Local baseline of upstream browser WASM, not the branch-native CLI. Only finite test inputs were observed."
+}

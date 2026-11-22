@@ -1559,6 +1559,9 @@ fn decompile_bytecode_internal(
                 })?;
             }
             drop(late_timer);
+            if options.synthesize_arithmetic_loops {
+                ast::reroll_method_calls::reroll_method_calls(&mut body);
+            }
             // Source `do` blocks the output flattened go back where a function
             // has more locals at once than Luau allows, before the final names
             // see their scopes.

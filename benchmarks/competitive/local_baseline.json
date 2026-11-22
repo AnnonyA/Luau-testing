@@ -1,0 +1,64 @@
+{
+  "schema": "tovek-competitive-fixture-v1",
+  "source_sha256": "7af3c09353d266efc680b24498eefaa3f8e08bdf02049ebfb19848f8c6c8fbd9",
+  "driver_sha256": "9300c36452f539db0c840ceb505c08e7d46af0b62dea19da1bc18c0f69abbe22",
+  "input_sha256": "95f17961dd5a555ac01ee7fcf4a8b65a3fd8acb80b94fcabf5720ebf11deb619",
+  "input_bytes": 569,
+  "bytecode_version": 9,
+  "compiler_sha256": "bd578dcffa6f00872c8ff946fd710b44387181c821c0f2cb46c4d16cfce54a98",
+  "vm_sha256": "3383a3e4dfed57a8999cb6c123e1203577a77a738d8eeb058c95e4b6c6e081e1",
+  "expected_compiler_commit": "c2ec0d4e5ca50796ba174a7565298f59aa572268",
+  "compiler_commit_verified": false,
+  "profile": {
+    "optimization": 2,
+    "debug": 1,
+    "fflags": "false",
+    "key": 1
+  },
+  "browser_engine_sha256": "6d4216df01454ee8cd8682e225385c7d1e6a2e1277f04754921bfb2772d92883",
+  "browser_engine_commit": "bd8055d",
+  "original_runtime": {
+    "exit": 0,
+    "stdout": "-2:2|4|\n0:2|4|\n1:2|6|6\n3:3|12|nil|6,12\n5:3|22|nil|6,12,22\n10:3|22|nil|6,12,22\n",
+    "stderr": ""
+  },
+  "network": "not requested",
+  "limitations": "One fixture and finite inputs are not a representative ranking or proof of equivalence. Hosted request times include network; local process times are not comparable.",
+  "results": [
+    {
+      "provider": "tovek-browser-wasm",
+      "identity": {
+        "kind": "local_webassembly",
+        "commit": "bd8055d",
+        "timing": "Node process including startup and WASM compilation"
+      },
+      "receipt": {
+        "status": "output",
+        "output_sha256": "f33bd90162b19908925ec0bfdde2b1b25580c5423d86b2e254db60dfbc0b7181",
+        "attempts": [
+          {
+            "status": "output",
+            "exit_code": 0,
+            "error": ""
+          }
+        ]
+      },
+      "compile": true,
+      "runtime_pass": true,
+      "input_sha256": "95f17961dd5a555ac01ee7fcf4a8b65a3fd8acb80b94fcabf5720ebf11deb619",
+      "output_file": "tovek-browser.luau",
+      "presentation": {
+        "bytes": 506,
+        "lines": 37,
+        "generated_name_occurrences_heuristic": 21
+      },
+      "runtime": {
+        "exit": 0,
+        "stdout": "-2:2|4|\n0:2|4|\n1:2|6|6\n3:3|12|nil|6,12\n5:3|22|nil|6,12,22\n10:3|22|nil|6,12,22\n",
+        "stderr": ""
+      }
+    }
+  ],
+  "observation": "Local baseline on the pinned checkout; competitors were unreachable and not compared. Six fixed runtime inputs only.",
+  "compiler_checkout_observed": "c2ec0d4e5ca50796ba174a7565298f59aa572268"
+}
