@@ -60,20 +60,29 @@ jobs:
           python3 scripts/fidelity_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
             --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --ast "$RUNNER_TEMP/luau-build/luau-ast" \
             --native target/fastrel/luau-lifter --out "$RUNNER_TEMP/fidelity-results"
-      - name: Inspect optimized output samples
+      - name: Summarize metrics and samples
         if: always()
         run: |
           python3 - <<'PY'
-          import os
+          import json, os
           from pathlib import Path
           root = Path(os.environ['RUNNER_TEMP'])/'fidelity-results'
-          for case in ('closures', 'inventory', 'records', 'tuples'):
-              for profile in ('O0-g0', 'O0-g2', 'O2-g2'):
-                  path = root / f'{case}-{profile}' / 'output.luau'
-                  if path.exists():
-                      print(f'=== OUTPUT {case}-{profile} ===')
-                      print(path.read_text(encoding='utf-8', errors='replace')[:16000])
-                      print(f'=== END {case}-{profile} ===')
+          def escape(value):
+              return str(value).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          report = root/'report.json'
+          if not report.exists():
+              print('::warning::Source-fidelity report missing; inspect the failing step.')
+          else:
+              data = json.loads(report.read_text())
+              for row in data['cases']:
+                  p, f = row['profile'], row['fidelity']
+                  msg = f"runtime={row['runtime_pass']} status={f['status']} structure={f.get('style_normalized_ratio')} names={f.get('exact_names')}/{f.get('source_bindings')} aligned={f.get('aligned_bindings')}"
+                  print(f"::notice title={row['case']} O{p['opt']} g{p['debug']}::{escape(msg)}")
+                  if (p['opt'], p['debug']) == (2, 2) or (row['case'] == 'inventory' and p['opt'] == 0):
+                      path = root/row['output']
+                      if path.exists():
+                          text = path.read_text(encoding='utf-8', errors='replace')
+                          print(f"::notice title=Output {row['case']} O{p['opt']} g{p['debug']}::{escape(text[:8000])}")
           PY
       - uses: actions/upload-artifact@v6
         if: always()
