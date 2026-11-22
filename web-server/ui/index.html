@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f5f5f0" />
+    <title>Tovek Studio — Luau decompiler</title>
+    <meta
+      name="description"
+      content="Un espacio sencillo para convertir bytecode Luau en código legible."
+    />
+    <link rel="stylesheet" href="/studio.css" />
+    <script defer src="/studio.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Tovek Studio, inicio"
+        ><span class="brand-mark"
+          ><svg viewBox="0 0 28 28" fill="none" aria-hidden="true">
+            <path
+              d="M5 7h18M14 7v14M8.5 21h11"
+              stroke="currentColor"
+              stroke-width="3"
+              stroke-linecap="square"
+            />
+            <path
+              d="M5 12h4M19 12h4"
+              stroke="currentColor"
+              stroke-width="2"
+            /></svg></span
+        ><span
+          >tovek<span class="brand-dot">.</span><small>studio</small></span
+        ></a
+      >
+      <div class="top-center">
+        <span class="status-dot"></span> TU ESPACIO DE TRABAJO
+      </div>
+      <a
+        class="top-link"
+        href="https://github.com/AnnonyA/Luau-testing"
+        target="_blank"
+        rel="noopener noreferrer"
+        >GitHub <span aria-hidden="true">↗</span></a
+      >
+    </header>
+
+    <main class="page">
+      <div class="breadcrumb">
+        <span>HERRAMIENTAS</span><span class="crumb-sep">/</span
+        ><span>DECOMPILADOR</span><span class="crumb-line"></span
+        ><span>01 — 01</span>
+      </div>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <div class="eyebrow">
+            <span class="asterisk">✳</span> DE BYTECODE A CÓDIGO
+          </div>
+          <h1 id="page-title">
+            Más claridad.<br /><span>Menos bytecode.</span>
+          </h1>
+          <p>
+            Convierte bytecode Luau en código legible, en un espacio pensado
+            para enfocarte en lo que importa.
+          </p>
+        </div>
+        <div class="intro-aside">
+          <div class="aside-icon">↗</div>
+          <p>
+            HECHO PARA<br /><strong>LUAU <span>/</span> ROBLOX</strong>
+          </p>
+          <div class="aside-rule"></div>
+          <span>UNA HERRAMIENTA<br />PARA ENTENDER MÁS.</span>
+        </div>
+      </section>
+
+      <section class="workspace" aria-label="Espacio de decompilación">
+        <div class="workspace-header">
+          <div>
+            <span class="workspace-icon">⌘</span
+            ><strong>Espacio de trabajo</strong
+            ><span class="workspace-sub"> / decompilador</span>
+          </div>
+          <span class="workspace-badge"><span></span> TOVEK ENGINE</span>
+        </div>
+        <div class="workspace-grid">
+          <section class="input-panel" aria-labelledby="input-title">
+            <div class="section-label">
+              <span>01 / ENTRADA</span><span class="section-label-line"></span
+              ><span>BYTECODE</span>
+            </div>
+            <h2 id="input-title">
+              Tu archivo<span class="green-period">.</span>
+            </h2>
+            <p class="panel-description">
+              Comienza cargando un archivo de bytecode Luau.
+            </p>
+            <input
+              id="file-input"
+              class="visually-hidden"
+              type="file"
+              accept=".luac,.bin,.bytecode,application/octet-stream"
+            />
+            <div
+              class="dropzone"
+              id="dropzone"
+              role="button"
+              tabindex="0"
+              aria-label="Seleccionar o arrastrar un archivo de bytecode"
+            >
+              <div class="upload-icon">
+                <svg
+                  width="26"
+                  height="26"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 15V4m0 0L8 8m4-4 4 4M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </div>
+              <div class="drop-title" id="drop-title">
+                Arrastra tu archivo aquí
+              </div>
+              <div class="drop-sub" id="drop-sub">
+                o <span>selecciona un archivo</span> desde tu equipo
+              </div>
+              <div class="drop-meta" id="drop-meta">
+                BYTECODE LUAU <span>·</span> MÁX. 16 MiB
+              </div>
+            </div>
+            <div class="setting">
+              <div>
+                <label for="encode-key">Origen del bytecode</label>
+                <p>Selecciona el formato de tu archivo.</p>
+              </div>
+              <select id="encode-key" aria-label="Origen del bytecode">
+                <option value="203">Roblox · 203</option>
+                <option value="1">Luau estándar · 1</option>
+              </select>
+            </div>
+            <button class="primary-button" id="decompile" disabled>
+              <span>Decompilar archivo</span><span aria-hidden="true">↗</span>
+            </button>
+            <p class="privacy-note">
+              <span aria-hidden="true">◇</span> El archivo se envía al servidor
+              Tovek que sirve esta página.
+            </p>
+          </section>
+          <section class="output-panel" aria-labelledby="output-title">
+            <div class="output-header">
+              <div>
+                <div class="section-label output-label">
+                  <span>02 / RESULTADO</span
+                  ><span class="section-label-line"></span><span>LUAU</span>
+                </div>
+                <h2 id="output-title">El resultado<span>.</span></h2>
+              </div>
+              <div class="output-actions">
+                <button id="copy" disabled aria-label="Copiar código">
+                  <span aria-hidden="true">▢</span> Copiar</button
+                ><button id="download" disabled aria-label="Descargar código">
+                  <span aria-hidden="true">↓</span> Descargar
+                </button>
+              </div>
+            </div>
+            <div class="editor-top">
+              <div class="editor-tab">
+                <span class="file-symbol">◈</span
+                ><span id="output-filename">resultado.luau</span
+                ><span class="tab-dot">●</span>
+              </div>
+              <span class="editor-language">LUAU</span>
+            </div>
+            <div class="editor" id="editor" aria-live="polite">
+              <div class="empty-state" id="empty-state">
+                <div class="empty-icon"><span>{</span><span> }</span></div>
+                <strong>Tu código aparecerá aquí</strong>
+                <p>
+                  Selecciona un archivo y haz clic en<br />«Decompilar archivo»
+                  para comenzar.
+                </p>
+                <span class="empty-caption"
+                  >LISTO CUANDO TÚ LO ESTÉS <span>↗</span></span
+                >
+              </div>
+              <pre id="code" hidden><code id="code-content"></code></pre>
+            </div>
+            <div class="editor-footer">
+              <span
+                ><span class="footer-dot"></span>
+                <span id="result-status">ESPERANDO ARCHIVO</span></span
+              ><span id="result-meta"
+                >UTF-8 <span class="footer-sep">/</span> LUAU</span
+              >
+            </div>
+          </section>
+        </div>
+      </section>
+      <div
+        id="message"
+        class="message"
+        role="status"
+        aria-live="polite"
+        hidden
+      ></div>
+      <section class="bottom-notes" aria-label="Cómo funciona">
+        <div class="bottom-intro">
+          <span>LA IDEA ES SIMPLE</span>
+          <p>Menos pasos,<br /><strong>más comprensión.</strong></p>
+        </div>
+        <div class="note">
+          <span>01 <i>↗</i></span
+          ><strong>Carga tu bytecode</strong>
+          <p>Selecciona un archivo y su formato de origen.</p>
+        </div>
+        <div class="note">
+          <span>02 <i>↗</i></span
+          ><strong>Decompila</strong>
+          <p>El motor reconstruye el código Luau.</p>
+        </div>
+        <div class="note">
+          <span>03 <i>↗</i></span
+          ><strong>Explora el resultado</strong>
+          <p>Copia o descarga el código generado.</p>
+        </div>
+      </section>
+      <footer>
+        <span
+          >© TOVEK STUDIO <span class="footer-sep">/</span> OPEN SOURCE</span
+        ><span
+          >CONSTRUIDO PARA ENTENDER <span class="footer-star">✳</span></span
+        >
+      </footer>
+    </main>
+  </body>
+</html>

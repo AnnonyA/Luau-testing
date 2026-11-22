@@ -4,8 +4,7 @@ name: Nightly fuzz
 # every night: the bug classes reviews found, searched for before a review
 # has to find them. A failure keeps its reduced program as an artifact.
 on:
-  schedule:
-    - cron: "17 3 * * *"
+  # Manual by default in this fork: the full run can take up to two hours.
   workflow_dispatch:
     inputs:
       seeds:
