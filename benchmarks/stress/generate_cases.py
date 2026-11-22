@@ -155,8 +155,50 @@ def assignment_order():
     return ''.join(units) + END
 
 
+def mixed():
+    units = [PRELUDE, """    local counters = {0, 0, 0}
+    local function tap(tag, ...)
+        local values = table.pack(...)
+        mark(tag, values.n)
+        return table.unpack(values, 1, values.n)
+    end
+"""]
+    for i in range(COUNT):
+        units.append(f'''    do
+        local functions = {{}}
+        for j = 1, 3 do
+            local captured = seed + j + {i}
+            functions[j] = function(delta)
+                captured += delta
+                counters[j] += 1
+                return captured, counters[j]
+            end
+        end
+        local first, seen = functions[2]({i % 4})
+        local again, times = functions[2](1)
+        local chosen = (first % 2 == 0 and first) or again
+        local count, one, two, three = (function(...)
+            return select("#", ...), ...
+        end)(tap("m{i}", chosen, nil, seen + times))
+        local denominator = seed - seed
+        local nan = denominator / denominator
+        if not (nan < chosen) and nan ~= nan and count == 3 and two == nil then
+            total += one + three
+        else
+            total -= count
+        end
+        local ok, value = pcall(function()
+            if seed % 5 == 0 then error("expected") end
+            return functions[1](1)
+        end)
+        if ok then total += value else mark("error{i}", ok) end
+    end
+''')
+    return ''.join(units) + END
+
+
 CASES = {'closures': closures, 'proxy': proxy, 'packs': packs, 'control': control,
-         'constructors': constructors, 'assignment_order': assignment_order}
+         'constructors': constructors, 'assignment_order': assignment_order, 'mixed': mixed}
 
 if __name__ == '__main__':
     for name, make in CASES.items():

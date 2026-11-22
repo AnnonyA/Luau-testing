@@ -16,7 +16,7 @@ from types import SimpleNamespace
 from decompiler_benchmark import observe, same_runtime
 from roadmap_v2 import ROOT, compile_source
 
-CASES = ('assignment_order', 'closures', 'constructors', 'control', 'packs', 'proxy')
+CASES = ('assignment_order', 'closures', 'constructors', 'control', 'mixed', 'packs', 'proxy')
 INPUTS = ROOT / 'benchmarks/stress'
 PROFILES = [(9, 0, 0), (9, 2, 2), (12, 0, 0), (12, 2, 2)]
 
@@ -110,6 +110,7 @@ def run(args):
                    'output': str(output.relative_to(out)), 'compiled': False, 'runtime_pass': None}
             if stderr.exists(): row['error'] = stderr.read_bytes()[:4000].decode('utf-8', 'replace')
             if result['status'] == 'output':
+                row['output_sha256'] = sha(output.read_bytes())
                 try:
                     rebuilt = compile_source(options, output, opt, debug)
                     rebuilt_path = folder/'rebuilt.luaubc'; rebuilt_path.write_bytes(rebuilt)

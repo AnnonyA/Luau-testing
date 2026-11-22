@@ -28,6 +28,26 @@ class StressRoundtripTests(unittest.TestCase):
         self.assertFalse(check_reference(dict(good, stdout='\n'.join(lines[:-1]))))
         self.assertFalse(check_reference(dict(good, stdout=good['stdout'].replace('true', 'false', 1))))
 
+    def test_native_invocation_uses_folder_protocol(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            script = root/'lifter'
+            script.write_text("""#!/usr/bin/env python3
+import base64, pathlib, sys
+assert sys.argv[1] == 'decompile-folder'
+assert sys.argv[4:] == ['--key', '1', '--threads', '1']
+assert base64.b64decode((pathlib.Path(sys.argv[2])/'subject.lua').read_bytes()) == b'\\x09payload'
+out = pathlib.Path(sys.argv[3]); out.mkdir()
+(out/'subject.luau').write_text('return 42')
+print('finished')
+""")
+            script.chmod(0o755)
+            data = root/'input'; data.write_bytes(b'\x09payload')
+            outcome = decompile(data, root/'out', root/'err', native=script, timeout=2)
+            self.assertEqual(outcome['status'], 'output')
+            self.assertEqual((root/'out').read_text(), 'return 42')
+            self.assertIn('finished', (root/'err').read_text())
+
     def test_native_decompiler_failures_are_not_reported_as_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

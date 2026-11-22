@@ -13,7 +13,8 @@ import sys
 import time
 from types import SimpleNamespace
 
-from benchmark_adapters import Expert, Luacid, Native, digest
+from benchmark_adapters import Expert, Luacid, digest
+from stress_roundtrip import decompile
 from decompiler_benchmark import observe, same_runtime
 from roadmap_v2 import ROOT, compile_source
 
@@ -61,8 +62,17 @@ def run(args):
                 {'kind': 'local_webassembly', 'commit': 'bd8055d',
                  'timing': 'Node process including startup and WASM compilation'})]
     if args.native:
-        native = Native(args.native)
-        outputs.append(('tovek-native', native.invoke(input_path, retry=False), native.identity))
+        native = args.native.resolve(strict=True)
+        output_path, stderr_path = out/'native-output.tmp', out/'native-stderr.txt'
+        outcome = decompile(input_path, output_path, stderr_path, native=native, timeout=30)
+        body = output_path.read_bytes() if output_path.exists() else b''
+        stderr = stderr_path.read_text(encoding='utf-8', errors='replace') if stderr_path.exists() else ''
+        receipt = {'status': outcome['status'], 'output_sha256': digest(body),
+                   'attempts': [{'status': outcome['status'], 'exit_code': outcome.get('exit'),
+                                 'seconds': outcome.get('seconds'), 'error': (outcome.get('error') or stderr)[:4000]}]}
+        identity = {'kind': 'tovek_folder_cli', 'sha256': digest(native.read_bytes()),
+                    'arguments': ['decompile-folder', '<base64 input folder>', '<output folder>', '--key', '1', '--threads', '1']}
+        outputs.append(('tovek-native', (receipt, body), identity))
     if args.online:
         # Both endpoints receive identical raw bytecode, represented as required by
         # each API. One request each; no retries or parallel/rate-limit pressure.
