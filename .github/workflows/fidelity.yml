@@ -1,0 +1,83 @@
+name: Source fidelity and semantics
+
+on:
+  push:
+    branches: ['arena/**']
+    paths:
+      - 'benchmarks/fidelity/**'
+      - 'benchmarks/stress/driver.luau'
+      - 'scripts/fidelity_roundtrip.py'
+      - 'scripts/test_fidelity_roundtrip.py'
+      - 'scripts/source_fidelity.py'
+      - 'scripts/output_quality.py'
+      - 'scripts/stress_roundtrip.py'
+      - 'ast/**'
+      - 'cfg/**'
+      - 'restructure/**'
+      - 'luau-lifter/**'
+      - '.github/workflows/fidelity.yml'
+  pull_request:
+    paths:
+      - 'benchmarks/fidelity/**'
+      - 'benchmarks/stress/driver.luau'
+      - 'scripts/fidelity_roundtrip.py'
+      - 'scripts/test_fidelity_roundtrip.py'
+      - 'scripts/source_fidelity.py'
+      - 'scripts/output_quality.py'
+      - 'scripts/stress_roundtrip.py'
+      - 'ast/**'
+      - 'cfg/**'
+      - 'restructure/**'
+      - 'luau-lifter/**'
+      - '.github/workflows/fidelity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fidelity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-06-15
+      - uses: Swatinem/rust-cache@v2
+      - name: Build native decompiler from this branch
+        run: cargo build --profile fastrel -p luau-lifter
+      - name: Build pinned Luau compiler, official AST parser and sandbox VM
+        run: |
+          git clone https://github.com/luau-lang/luau.git "$RUNNER_TEMP/luau"
+          git -C "$RUNNER_TEMP/luau" checkout --quiet c2ec0d4e5ca50796ba174a7565298f59aa572268
+          cmake -S "$RUNNER_TEMP/luau" -B "$RUNNER_TEMP/luau-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/luau-build" --target Luau.Compile.CLI Luau.Ast.CLI --parallel 2
+          cmake -S scripts/benchmark_vm -B "$RUNNER_TEMP/benchmark-vm" -DLUAU_SOURCE_DIR="$RUNNER_TEMP/luau" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/benchmark-vm" --parallel 2
+      - name: Compare structure and names, then execute
+        run: |
+          python3 scripts/fidelity_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
+            --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --ast "$RUNNER_TEMP/luau-build/luau-ast" \
+            --native target/fastrel/luau-lifter --out "$RUNNER_TEMP/fidelity-results"
+      - name: Inspect optimized output samples
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])/'fidelity-results'
+          for case in ('closures', 'inventory', 'records', 'tuples'):
+              for profile in ('O0-g0', 'O0-g2', 'O2-g2'):
+                  path = root / f'{case}-{profile}' / 'output.luau'
+                  if path.exists():
+                      print(f'=== OUTPUT {case}-{profile} ===')
+                      print(path.read_text(encoding='utf-8', errors='replace')[:16000])
+                      print(f'=== END {case}-{profile} ===')
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: source-fidelity-results
+          path: ${{ runner.temp }}/fidelity-results/
+          if-no-files-found: ignore
