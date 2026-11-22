@@ -1826,6 +1826,14 @@ mod tests {
     }
 
     #[test]
+    fn classify_residual_with_prototype_keeps_legacy_code() {
+        let reason = "control-flow structuring failed: residual goto/label would be invalid Luau (prototype 7)";
+        let (code, evidence) = classify_failure(reason);
+        assert_eq!(code, "residual_control_flow");
+        assert!(evidence.is_none());
+    }
+
+    #[test]
     fn classify_failure_preserves_per_function_structuring_evidence() {
         let failure = luau_lifter::DecompileFailure {
             message: "control-flow structuring failed: residual goto/label would be invalid Luau"

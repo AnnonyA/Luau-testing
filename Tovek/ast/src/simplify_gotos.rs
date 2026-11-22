@@ -2234,6 +2234,94 @@ pub fn function_tree_has_residual_control(block: &Block) -> bool {
     tree_block_has_residual(block, &mut FxHashSet::default())
 }
 
+/// Find the prototype holding the first residual control node, for
+/// diagnostics. Mirrors [`function_tree_has_residual_control`] but reports
+/// where the residual lives: `None` when the tree is clean, `Some(None)`
+/// when it is in a synthesized function (no prototype id), and
+/// `Some(Some(proto))` for the bytecode prototype id (main included).
+/// Only runs on the failure path.
+pub fn function_tree_residual_prototype(
+    block: &Block,
+    main_prototype: usize,
+) -> Option<Option<usize>> {
+    fn value_has_residual(
+        value: &RValue,
+        visited: &mut FxHashSet<usize>,
+    ) -> Option<Option<usize>> {
+        if let RValue::Closure(closure) = value {
+            let address = Arc::as_ptr(&closure.function.0) as usize;
+            if !visited.insert(address) {
+                return None;
+            }
+            let function = closure.function.lock();
+            return tree_block_has_residual(&function.body, function.bytecode_proto_id, visited);
+        }
+        let mut found: Option<Option<usize>> = None;
+        value.visit_rvalues(&mut |child| {
+            if found.is_some() {
+                return false;
+            }
+            if let Some(proto) = value_has_residual(child, visited) {
+                found = Some(proto);
+                return false;
+            }
+            true
+        });
+        found
+    }
+
+    fn tree_block_has_residual(
+        block: &Block,
+        current: Option<usize>,
+        visited: &mut FxHashSet<usize>,
+    ) -> Option<Option<usize>> {
+        for statement in &block.0 {
+            if matches!(
+                statement,
+                Statement::Goto(_)
+                    | Statement::Label(_)
+                    | Statement::NumForInit(_)
+                    | Statement::NumForNext(_)
+                    | Statement::GenericForInit(_)
+                    | Statement::GenericForNext(_)
+            ) {
+                return Some(current);
+            }
+            let mut found: Option<Option<usize>> = None;
+            crate::deinline::visit_stmt_rvalues(statement, &mut |value| {
+                if found.is_some() {
+                    return false;
+                }
+                if let Some(proto) = value_has_residual(value, visited) {
+                    found = Some(proto);
+                    return false;
+                }
+                true
+            });
+            if let Some(proto) = found {
+                return Some(proto);
+            }
+            let nested = match statement {
+                Statement::If(node) => {
+                    tree_block_has_residual(&node.then_block.lock(), current, visited)
+                        .or_else(|| tree_block_has_residual(&node.else_block.lock(), current, visited))
+                }
+                Statement::While(node) => tree_block_has_residual(&node.block.lock(), current, visited),
+                Statement::Repeat(node) => tree_block_has_residual(&node.block.lock(), current, visited),
+                Statement::NumericFor(node) => tree_block_has_residual(&node.block.lock(), current, visited),
+                Statement::GenericFor(node) => tree_block_has_residual(&node.block.lock(), current, visited),
+                _ => None,
+            };
+            if nested.is_some() {
+                return nested;
+            }
+        }
+        None
+    }
+
+    tree_block_has_residual(block, Some(main_prototype), &mut FxHashSet::default())
+}
+
 /// Post-`LocalDeclarer` fixup: in any block that still contains a `goto`, move
 /// the block's `local` declarations to the top. This prevents the remaining
 /// (valid) gotos from jumping *into* the scope of a local declared between the
@@ -2337,6 +2425,26 @@ mod tests {
 
     fn print(local: &RcLocal) -> Statement {
         Call::new(global("print"), vec![local_value(local)]).into()
+    }
+
+    #[test]
+    fn residual_prototype_reports_root_nested_and_synthetic_functions() {
+        let child = Arc::new(Mutex::new(Function {
+            bytecode_proto_id: Some(7),
+            body: Block(vec![goto("target")]),
+            ..Default::default()
+        }));
+        let closure = || -> RValue { Closure {
+            node_origin: Default::default(), function: ByAddress(child.clone()), upvalues: vec![],
+        }.into() };
+        let nested = Block(vec![If::new(bool_lit(true),
+            Block(vec![Return::new(vec![closure(), closure()]).into()]), Block::default()).into()]);
+        assert_eq!(function_tree_residual_prototype(&nested, 2), Some(Some(7)));
+        child.lock().bytecode_proto_id = None;
+        assert_eq!(function_tree_residual_prototype(&nested, 2), Some(None));
+        child.lock().body = Block::default();
+        assert_eq!(function_tree_residual_prototype(&nested, 2), None);
+        assert_eq!(function_tree_residual_prototype(&Block(vec![label("target")]), 2), Some(Some(2)));
     }
 
     #[test]
@@ -3151,6 +3259,9 @@ pub fn function_tree_has_unlowered_control(block: &Block) -> bool {
                 assert_eq!(super::function_tree_has_residual_control(&block),
                     function_tree_has_goto_or_label(&block) || function_tree_has_unlowered_control(&block),
                     "residual terminal {terminal}, location {location}");
+                assert_eq!(super::function_tree_residual_prototype(&block, 42).is_some(),
+                    super::function_tree_has_residual_control(&block),
+                    "residual prototype terminal {terminal}, location {location}");
                 assert_eq!(Arc::strong_count(&function), owners);
                 // Re-query after publication must observe the new child state;
                 // neither implementation may retain a cross-query cache.

@@ -1409,19 +1409,34 @@ fn decompile_bytecode_internal(
             // future unsupported CFG shape must be reported as a decompile error,
             // never silently returned as invalid Luau.
             if ast::simplify_gotos::function_tree_has_residual_control(&body) {
+                // Name the prototype holding the residual (issue #11 triage):
+                // the batch FAIL line prints only `message`, so the function
+                // must be in the message itself, as tuple-order refusals do.
+                let residual_prototype =
+                    ast::simplify_gotos::function_tree_residual_prototype(&body, chunk.main);
+                let location = match residual_prototype {
+                    Some(Some(proto)) => format!(" (prototype {proto})"),
+                    Some(None) => " (in a synthesized function)".to_string(),
+                    None => String::new(),
+                };
                 if function_diagnostics.is_empty() {
                     function_diagnostics.push(DecompileDiagnostic {
                         stage: "final_invariant".to_string(),
                         code: "residual_control_flow".to_string(),
-                        function: format!("root:p{}", chunk.main),
+                        function: match residual_prototype {
+                            Some(Some(proto)) if proto == chunk.main => format!("root:p{proto}"),
+                            Some(Some(proto)) => format!("p{proto}"),
+                            Some(None) => "synthesized".to_string(),
+                            None => format!("root:p{}", chunk.main),
+                        },
                         message: "final AST still contains an internal goto/label or loop marker"
                             .to_string(),
                     });
                 }
                 return Err(DecompileFailure {
-                    message:
-                        "control-flow structuring failed: residual goto/label would be invalid Luau"
-                            .to_string(),
+                    message: format!(
+                        "control-flow structuring failed: residual goto/label would be invalid Luau{location}"
+                    ),
                     diagnostics: function_diagnostics,
                 });
             }
@@ -1509,7 +1524,7 @@ fn decompile_bytecode_internal(
             })) {
                 let _span = ast::telemetry::Span::new("S_RESERVE_TABLE_SLOTS");
                 let reservation = ast::rebuild_table_literals::reserve_unfolded_table_slots(&mut body);
-                if reservation == Err(ast::rebuild_table_literals::OPEN_LIST_TAIL) {
+                let reservation = if reservation == Err(ast::rebuild_table_literals::OPEN_LIST_TAIL) {
                     if let Some(pass) = ast::rebuild_table_literals::snapshot_open_list_constructors(&mut body) {
                         if emit_upvalue_analysis {
                             table_open_list_snapshots = Some(serde_json::json!({
@@ -1520,7 +1535,6 @@ fn decompile_bytecode_internal(
                         if options.emit_binding_provenance { local_producers.push(pass); }
                     }
                     ast::rebuild_table_literals::reserve_unfolded_table_slots(&mut body)
-                        .map_err(DecompileFailure::message)?;
                 } else if reservation == Err(ast::rebuild_table_literals::LARGE_ALLOCATION)
                     && !globals.dynamic_environment
                     && !globals.unspellable
@@ -1528,10 +1542,21 @@ fn decompile_bytecode_internal(
                 {
                     ast::rebuild_table_literals::create_large_allocations(&mut body);
                     ast::rebuild_table_literals::reserve_unfolded_table_slots(&mut body)
-                        .map_err(DecompileFailure::message)?;
                 } else {
-                    reservation.map_err(DecompileFailure::message)?;
-                }
+                    reservation
+                };
+                reservation.map_err(|error| {
+                    if error == ast::rebuild_table_literals::OPEN_LIST_TAIL {
+                        let location = match ast::rebuild_table_literals::function_tree_open_list_prototype(&body, chunk.main) {
+                            Some(Some(proto)) => format!(" (prototype {proto})"),
+                            Some(None) => " (in a synthesized function)".to_string(),
+                            None => String::new(),
+                        };
+                        DecompileFailure::message(format!("{error}{location}"))
+                    } else {
+                        DecompileFailure::message(error)
+                    }
+                })?;
             }
             drop(late_timer);
             // Source `do` blocks the output flattened go back where a function

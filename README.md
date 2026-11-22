@@ -39,9 +39,12 @@ On top of the upstream import:
 - **Python 3.11 compat:** fixed an f-string backslash in
   `scripts/test_fuzz_roundtrip.py` that was a `SyntaxError` before 3.12;
   `python3 -m unittest discover` now passes on 3.11 (358 tests).
-- **CI:** pinned Python 3.12 explicitly in the `fixtures` job
-  (`actions/setup-python`, matching `release.yaml`) instead of relying on
-  the runner image default.
+- **CI:** the root workflow runs workspace Rust tests and Python tests from
+  the vendored directory; workflows inside `Tovek/.github/` do not run in this
+  repository. The upstream fixtures job also pins Python 3.12 explicitly.
+- **Diagnostics:** residual control-flow and open-SETLIST refusals report
+  the affected bytecode prototype when available, including nested closures.
+  These remain safe refusals; they do not yet increase decompilation coverage.
 - **Executor clients:** `decompile.client.luau` and
   `decompile-batch.client.luau` now `pcall` the HTTP request and
   `getscriptbytecode`, handle nil/empty responses, allow overriding the
@@ -58,4 +61,4 @@ On top of the upstream import:
 Open upstream issues tracked for follow-up: #10 (unbounded memory on one
 ModuleScript) and #11 (11/5,979 scripts fail: residual goto/label,
 open-call tuple-order proof, open SETLIST in PlayerModule). Both need the
-private game bytecode repros and a Rust toolchain to fix properly.
+representative bytecode repros and Rust-based semantic testing to fix properly.

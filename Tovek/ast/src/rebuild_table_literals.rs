@@ -509,6 +509,62 @@ pub fn reserve_unfolded_table_slots(block: &mut Block) -> Result<(), &'static st
     Ok(())
 }
 
+/// Find the prototype holding the first open `SETLIST` (an unfinished
+/// constructor), for diagnostics. Mirrors the traversal of
+/// [`reserve_unfolded_table_slots`] but reports where the tail lives:
+/// `None` when the tree has none, `Some(None)` when it is in a synthesized
+/// function (no prototype id), and `Some(Some(proto))` for the bytecode
+/// prototype id (main included). Only runs on the failure path.
+pub fn function_tree_open_list_prototype(
+    block: &Block,
+    main_prototype: usize,
+) -> Option<Option<usize>> {
+    fn tree_block_has_open_list(
+        block: &Block,
+        current: Option<usize>,
+        visited: &mut rustc_hash::FxHashSet<usize>,
+    ) -> Option<Option<usize>> {
+        // Reservation checks the entire current block before its children.
+        if block.0.iter().any(|statement| matches!(statement, Statement::SetList(list) if list.tail.is_some())) {
+            return Some(current);
+        }
+        for statement in &block.0 {
+            let mut found = None;
+            // Match the reservation walk, including indexed assignment targets.
+            statement.traverse_rvalues_ref(&mut |value| {
+                if found.is_some() { return; }
+                if let RValue::Closure(closure) = value {
+                    let address = triomphe::Arc::as_ptr(&closure.function.0) as usize;
+                    if visited.insert(address) {
+                        let function = closure.function.lock();
+                        found = tree_block_has_open_list(&function.body, function.bytecode_proto_id, visited);
+                    }
+                }
+            });
+            if found.is_some() {
+                return found;
+            }
+            let nested = match statement {
+                Statement::If(node) => {
+                    tree_block_has_open_list(&node.then_block.lock(), current, visited)
+                        .or_else(|| tree_block_has_open_list(&node.else_block.lock(), current, visited))
+                }
+                Statement::While(node) => tree_block_has_open_list(&node.block.lock(), current, visited),
+                Statement::Repeat(node) => tree_block_has_open_list(&node.block.lock(), current, visited),
+                Statement::NumericFor(node) => tree_block_has_open_list(&node.block.lock(), current, visited),
+                Statement::GenericFor(node) => tree_block_has_open_list(&node.block.lock(), current, visited),
+                _ => None,
+            };
+            if nested.is_some() {
+                return nested;
+            }
+        }
+        None
+    }
+
+    tree_block_has_open_list(block, Some(main_prototype), &mut rustc_hash::FxHashSet::default())
+}
+
 /// A constructor holding named fields of a table its later stores also
 /// fill, smaller than the allocation those stores size (`local M = { A =
 /// function() end }; function M.B() end ...`): as stores again, right after
@@ -1873,6 +1929,29 @@ mod tests {
 
     fn print(value: RValue) -> crate::Statement {
         Call::new(global("print"), vec![value]).into()
+    }
+
+    #[test]
+    fn open_list_prototype_follows_reservation_order_and_nested_targets() {
+        let object = local("object");
+        let open = || crate::SetList::new(object.clone(), 1, vec![], Some(global("tail"))).into();
+        let child = Arc::new(Mutex::new(Function {
+            bytecode_proto_id: Some(8), body: Block(vec![open()]), ..Default::default()
+        }));
+        let closure = || -> RValue { Closure {
+            node_origin: Default::default(), function: ByAddress(child.clone()), upvalues: vec![],
+        }.into() };
+        // Indexed LHS is visited before RHS by the reservation pass.
+        let target = Assign::new(vec![Index::new(closure(), nil()).into()], vec![nil()]).into();
+        let nested = Block(vec![target]);
+        assert_eq!(super::function_tree_open_list_prototype(&nested, 3), Some(Some(8)));
+        child.lock().bytecode_proto_id = None;
+        assert_eq!(super::function_tree_open_list_prototype(&nested, 3), Some(None));
+        // A direct open list wins even when it occurs after a child closure.
+        let direct = Block(vec![nested.0[0].clone(), open()]);
+        assert_eq!(super::function_tree_open_list_prototype(&direct, 3), Some(Some(3)));
+        child.lock().body = Block::default();
+        assert_eq!(super::function_tree_open_list_prototype(&nested, 3), None);
     }
 
     #[test]
