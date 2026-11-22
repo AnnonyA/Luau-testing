@@ -47,3 +47,9 @@ upstream WASM at `bd8055d`, not the current branch. No external code is sent.
 `browser_expanded_baseline.json` records the expanded 258/258 local results and
 43 mutation controls for upstream browser WASM `bd8055d`, using the 11-seed
 driver. This is not a native-branch result.
+
+The expanded suite passed against the native CLI built from commit `84cf3eb`
+in [GitHub Actions run 45077649587](https://github.com/AnnonyA/Luau-testing/actions/runs/45077649587):
+258/258 profiles matched and all 43 mutation controls were detected. The four
+artifacts contain the native decompiled outputs and full reports. These tests
+cover 2,838 input/profile combinations, not all possible program behavior.
