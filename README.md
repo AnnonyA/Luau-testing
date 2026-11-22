@@ -1,64 +1,46 @@
-# Luau-testing
+# Tovek Studio
 
-Testing / improvement fork. The main content is a clone of
-[Tovek](https://github.com/Kiet1308/Tovek) — a high-readability,
-high-performance Luau decompiler (Rust workspace) — vendored under
-[`Tovek/`](Tovek/) so it can be improved here.
+Decompilador de bytecode Luau, basado en [Tovek](https://github.com/Kiet1308/Tovek). Incluye una interfaz web local, CLI y API HTTP.
 
-## Layout
+## Empezar
 
-- `Tovek/` — the Tovek clone (upstream: `Kiet1308/Tovek`, imported at
-  `ce2ea3325547fa3896f274b68013386338039040`, 2026-11-15). See
-  [`Tovek/README.md`](Tovek/README.md) for the full upstream docs.
-  - `Tovek/luau-lifter/` — the `luau-lifter` CLI (single-file + `decompile-folder`)
-  - `Tovek/web-server/` — local HTTP server (`POST /decompile`, `/decompile/raw`, `/decompile/batch`)
-  - `Tovek/ast/`, `Tovek/cfg/`, `Tovek/restructure/` — decompiler core crates
-  - `Tovek/decompile.client.luau`, `Tovek/decompile-batch.client.luau` — executor-side clients
-  - `Tovek/scripts/` — Python audit / round-trip / fuzz tooling + `test_*.py` unit tests
-
-> Note: `Tovek/.gitignore` is upstream's (it ignores `*.md` / `*.json`
-> scratch). The initial import was force-added (`git add -f Tovek`) so the
-> tracked set matches upstream; new docs/fixtures may need `-f` too.
-
-## Build & test (Tovek)
-
-Requires the pinned nightly toolchain (`Tovek/rust-toolchain.toml`:
-`nightly-2026-06-15`) and Python 3.11+ for the scripts.
+Necesitas Git y Rust con `rustup`. El proyecto usa la versión fijada en `rust-toolchain.toml`.
 
 ```sh
-cd Tovek
-cargo +nightly-2026-06-15 test --workspace --all-targets
-cargo +nightly-2026-06-15 build --release -p luau-lifter
-python3 -m unittest discover -s scripts -p 'test_*.py'
+cargo run --release -p web-server
 ```
 
-## Improvements in this fork
+Abre **http://127.0.0.1:3000**. Carga bytecode Luau (máximo 16 MiB), elige su origen y decompílalo. Puedes copiar o descargar el resultado. El archivo se envía al servidor que sirve la página; si ejecutas el servidor en tu equipo, se queda allí.
 
-On top of the upstream import:
+Para usar la CLI:
 
-- **Python 3.11 compat:** fixed an f-string backslash in
-  `scripts/test_fuzz_roundtrip.py` that was a `SyntaxError` before 3.12;
-  `python3 -m unittest discover` now passes on 3.11 (358 tests).
-- **CI:** the root workflow runs workspace Rust tests and Python tests from
-  the vendored directory; workflows inside `Tovek/.github/` do not run in this
-  repository. The upstream fixtures job also pins Python 3.12 explicitly.
-- **Diagnostics:** residual control-flow and open-SETLIST refusals report
-  the affected bytecode prototype when available, including nested closures.
-  These remain safe refusals; they do not yet increase decompilation coverage.
-- **Executor clients:** `decompile.client.luau` and
-  `decompile-batch.client.luau` now `pcall` the HTTP request and
-  `getscriptbytecode`, handle nil/empty responses, allow overriding the
-  server URL via `getgenv().TOVEK_SERVER_URL`, and warn instead of erroring
-  when SynSaveInstance fails to load.
-- **CLI:** added `--jobs` as a visible alias for `--threads` in
-  `decompile-folder` / `validate-folder` (issue #10 suggestion), with help
-  text about memory on constrained machines.
-- **Docs:** new "Large dumps: threads and memory" section in
-  `Tovek/README.md` (issue #10) — how `--jobs` trades wall time for peak
-  memory and how to isolate a runaway file.
-- **Typo:** `recieved` → `received` in `web-server` error message.
+```sh
+cargo run --release -p luau-lifter -- --help
+```
 
-Open upstream issues tracked for follow-up: #10 (unbounded memory on one
-ModuleScript) and #11 (11/5,979 scripts fail: residual goto/label,
-open-call tuple-order proof, open SETLIST in PlayerModule). Both need the
-representative bytecode repros and Rust-based semantic testing to fix properly.
+El servidor también ofrece `POST /decompile/raw` (bytecode binario), `POST /decompile` (base64) y `POST /decompile/batch`. Los clientes Luau están en la raíz del repositorio.
+
+## Pruebas
+
+```sh
+cargo test --workspace --all-targets
+python3 -m unittest discover -s scripts -p 'test_*.py'
+node --test web-server/ui/studio.test.mjs
+```
+
+Para trabajar solo en la interfaz, `node web-server/ui/dev-server.mjs` abre una vista en el puerto 4173 y redirige las solicitudes al servidor Rust local en el puerto 3000. La decompilación requiere que ese servidor esté en marcha.
+
+## Roadmap
+
+- [x] Interfaz web para un archivo, con copia y descarga.
+- [ ] Comparativa reproducible de calidad y rendimiento.
+- [ ] Límites de tiempo y memoria por archivo.
+- [ ] Reducir los rechazos de flujo de control, llamadas abiertas y `SETLIST`.
+- [ ] Recuperar más nombres y tipos con evidencia confiable.
+- [ ] Procesamiento por lotes desde la interfaz.
+
+La decompilación no garantiza recuperar el código original. Los casos no demostrablemente seguros se rechazan en lugar de producir Luau inválido.
+
+## Créditos y licencia
+
+Fork de [Kiet1308/Tovek](https://github.com/Kiet1308/Tovek), derivado de medal. Consulta [LICENSE.txt](LICENSE.txt).

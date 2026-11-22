@@ -25,8 +25,8 @@ use axum::{
     extract::{DefaultBodyLimit, FromRequest, State},
     http::{header::CONTENT_TYPE, HeaderMap, StatusCode},
     middleware::{self, Next},
-    response::{IntoResponse, Response},
-    routing::post,
+    response::{Html, IntoResponse, Response},
+    routing::{get, post},
     Extension, Router,
 };
 use base64::prelude::*;
@@ -270,7 +270,15 @@ fn app(state: AppState) -> Router {
             post(decompile_batch)
                 .layer(DefaultBodyLimit::max(BATCH_BODY_LIMIT)),
         )
+        // Static UI requests should never take decompilation queue slots.
         .route_layer(middleware::from_fn_with_state(state.clone(), admit_work))
+        .route("/", get(|| async { Html(include_str!("../ui/index.html")) }))
+        .route("/studio.css", get(|| async {
+            ([(CONTENT_TYPE, "text/css; charset=utf-8")], include_str!("../ui/studio.css"))
+        }))
+        .route("/studio.js", get(|| async {
+            ([(CONTENT_TYPE, "text/javascript; charset=utf-8")], include_str!("../ui/studio.js"))
+        }))
         .with_state(state)
 }
 
@@ -1006,6 +1014,25 @@ mod tests {
         let results = decompile_parsed_batch(items);
         assert!(results[0].ok);
         assert!(!results[1].ok);
+    }
+
+    #[tokio::test]
+    async fn studio_assets_are_served_without_admission() {
+        let state = AppState::new(1, 0, DEFAULT_QUEUE_TIMEOUT, DEFAULT_UPLOAD_TIMEOUT);
+        // Holding the only slot must not prevent the interface from loading.
+        let _permit = state.cpu_semaphore.acquire().await.unwrap();
+        for (path, content_type, expected) in [
+            ("/", "text/html", "Tovek Studio"),
+            ("/studio.css", "text/css", ".workspace"),
+            ("/studio.js", "text/javascript", "/decompile/raw"),
+        ] {
+            let response = app(state.clone()).oneshot(axum::http::Request::get(path)
+                .body(Body::empty()).unwrap()).await.unwrap();
+            assert_eq!(response.status(), StatusCode::OK);
+            assert!(response.headers()[CONTENT_TYPE].to_str().unwrap().starts_with(content_type));
+            let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+            assert!(std::str::from_utf8(&body).unwrap().contains(expected));
+        }
     }
 
     #[tokio::test]
