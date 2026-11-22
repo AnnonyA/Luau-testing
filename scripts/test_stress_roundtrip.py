@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from stress_roundtrip import CASES, INPUTS, PROFILES, check_reference, decompile
+from stress_roundtrip import CASES, INPUTS, PROFILES, SEEDS, check_reference, decompile, parse_shard
 
 
 class StressRoundtripTests(unittest.TestCase):
@@ -11,22 +11,40 @@ class StressRoundtripTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('stress_generator', INPUTS/'generate_cases.py')
         generator = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(generator)
-        self.assertEqual(set(CASES), set(generator.CASES))
-        for case in CASES:
+        self.assertEqual(set(CASES[:7]), set(generator.CASES))
+        for case in CASES[:7]:
             text = (INPUTS/f'{case}.luau').read_text(encoding='utf-8')
             self.assertEqual(text, generator.CASES[case]())
             self.assertGreaterEqual(len(text.splitlines()), 150)
             self.assertEqual(text.count('local total = seed + 7'), 1)
-        self.assertEqual(len(PROFILES), 4)
+        spec = importlib.util.spec_from_file_location('adversarial_generator', INPUTS/'generate_adversarial.py')
+        adversarial = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(adversarial)
+        self.assertEqual(CASES[7:], adversarial.case_names())
+        self.assertEqual(len(adversarial.BLOCKS), 16)
+        for i, case in enumerate(adversarial.case_names()):
+            text = (INPUTS/f'{case}.luau').read_text(encoding='utf-8')
+            self.assertEqual(text, adversarial.make_case(i))
+            self.assertGreaterEqual(len(text.splitlines()), 200)
+            self.assertEqual(text.count('local total = seed + 7'), 1)
+        self.assertEqual(len(PROFILES), 6)
 
     def test_reference_refuses_hidden_errors_or_incomplete_inputs(self):
-        lines = [f'{seed}|5|true|value' for seed in (-3, 0, 1, 7, 18)]
+        lines = [f'{seed}|5|true|value' for seed in SEEDS]
         good = {'exit': 0, 'stdout': '\n'.join(lines)+'\n', 'stderr': ''}
         self.assertTrue(check_reference(good))
         self.assertFalse(check_reference(dict(good, exit=1)))
         self.assertFalse(check_reference(dict(good, stderr='error')))
         self.assertFalse(check_reference(dict(good, stdout='\n'.join(lines[:-1]))))
         self.assertFalse(check_reference(dict(good, stdout=good['stdout'].replace('true', 'false', 1))))
+
+    def test_shards_partition_and_validate_cases(self):
+        shards = [[case for i, case in enumerate(CASES) if i % 4 == n] for n in range(4)]
+        self.assertEqual(set().union(*map(set, shards)), set(CASES))
+        self.assertEqual(sum(map(len, shards)), len(CASES))
+        self.assertEqual(parse_shard('3/4'), (3, 4))
+        for invalid in ('4/4', '-1/4', '0/0', '1/a', '1/100', '1/2/3'):
+            with self.assertRaises(Exception): parse_shard(invalid)
 
     def test_native_invocation_uses_folder_protocol(self):
         with tempfile.TemporaryDirectory() as tmp:

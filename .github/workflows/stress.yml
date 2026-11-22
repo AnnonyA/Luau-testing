@@ -30,6 +30,10 @@ permissions:
 jobs:
   stress:
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
@@ -51,7 +55,7 @@ jobs:
         run: |
           python3 scripts/stress_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
             --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --native target/fastrel/luau-lifter \
-            --out "$RUNNER_TEMP/stress-results" --timeout 30
+            --out "$RUNNER_TEMP/stress-results" --timeout 30 --shard "${{ matrix.shard }}/4"
       - name: Annotate and summarize results
         if: always()
         run: |
@@ -69,12 +73,28 @@ jobs:
               for row in rows:
                   if row['runtime_pass'] is not True:
                       p = row['profile']
-                      msg = (row.get('error') or row.get('compile_error') or row.get('runtime_error') or row['decompile']['status']).replace('%','%25').replace('\r','%0D').replace('\n','%0A')[:800]
+                      msg = (row.get('compile_error') or row.get('runtime_error') or row.get('error') or row['decompile']['status']).replace('%','%25').replace('\r','%0D').replace('\n','%0A')[:800]
                       print(f'::warning title={row["case"]} v{p["version"]} O{p["opt"]} g{p["debug"]}::{msg}')
+                      a = report.parent / Path(row['output']).parent / 'original.txt'
+                      b = report.parent / Path(row['output']).parent / 'observed.txt'
+                      if a.exists() and b.exists():
+                          from itertools import zip_longest
+                          for line_number, (x, y) in enumerate(zip_longest(a.read_text().splitlines(), b.read_text().splitlines()), 1):
+                              if x != y:
+                                  print(f'First differing line {line_number}: expected={str(x)[:1200]} observed={str(y)[:1200]}')
+                                  break
+                      # Keep diagnostic snippets in logs even if artifact downloads
+                      # are unavailable in a constrained debugging environment.
+                      folder = report.parent / Path(row['output']).parent
+                      for filename in ('original.txt', 'observed.txt', 'output.luau'):
+                          f = folder / filename
+                          if f.exists():
+                              print(f'--- {row["case"]} v{p["version"]} O{p["opt"]} {filename} (first 3000 chars) ---')
+                              print(f.read_text(errors='replace')[:3000])
           PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: native-stress-results
+          name: native-stress-results-${{ matrix.shard }}
           path: ${{ runner.temp }}/stress-results/
           if-no-files-found: ignore

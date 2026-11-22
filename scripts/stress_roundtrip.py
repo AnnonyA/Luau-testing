@@ -19,9 +19,11 @@ from types import SimpleNamespace
 from decompiler_benchmark import observe, same_runtime
 from roadmap_v2 import ROOT, compile_source
 
-CASES = ('assignment_order', 'closures', 'constructors', 'control', 'mixed', 'packs', 'proxy')
+CASES = ('assignment_order', 'closures', 'constructors', 'control', 'mixed', 'packs', 'proxy') + tuple(
+    f'adversarial_{i:02}' for i in range(32))
+SEEDS = (-17, -7, -3, -1, 0, 1, 2, 5, 7, 18, 31)
 INPUTS = ROOT / 'benchmarks/stress'
-PROFILES = [(9, 0, 0), (9, 2, 2), (12, 0, 0), (12, 2, 2)]
+PROFILES = [(v, opt, opt) for v in (9, 12) for opt in (0, 1, 2)]
 
 
 def sha(data):
@@ -69,8 +71,8 @@ def check_reference(result):
     if result['exit'] != 0 or result['stderr']:
         return False
     lines = result['stdout'].splitlines()
-    return len(lines) == 5 and all(line.startswith(f'{seed}|5|true|')
-                                  for line, seed in zip(lines, (-3, 0, 1, 7, 18)))
+    return len(lines) == len(SEEDS) and all(line.startswith(f'{seed}|5|true|')
+                                           for line, seed in zip(lines, SEEDS))
 
 
 def run(args):
@@ -80,7 +82,12 @@ def run(args):
     out = args.out.resolve()
     out.mkdir(parents=True, exist_ok=False)
     rows, controls = [], []
-    for case in CASES:
+    cases = args.cases or CASES
+    if args.shard:
+        index, count = args.shard
+        cases = [case for position, case in enumerate(cases) if position % count == index]
+        if not cases: raise ValueError('shard has no cases')
+    for case in cases:
         source = INPUTS/f'{case}.luau'
         for version, opt, debug in PROFILES:
             profile = f'{case}-v{version}-O{opt}-g{debug}'
@@ -136,11 +143,22 @@ def run(args):
               'compiler_sha256': sha(compiler.read_bytes()), 'vm_sha256': sha(vm.read_bytes()),
               'compiler_revision_expected': 'c2ec0d4e5ca50796ba174a7565298f59aa572268',
               'compiler_revision_verified': False, 'cases': rows, 'mutation_controls': controls,
-              'limitations': 'Five inputs per profile are not proof of equivalence. Compiler revision not verified by this runner.'}
+              'seeds': list(SEEDS),
+              'limitations': 'Finite test inputs are not proof of equivalence. Compiler revision not verified by this runner.'}
     (out/'report.json').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
     bad = [r for r in rows if r['runtime_pass'] is not True]
     print(f"RESULT engine={report['engine']} passed={len(rows)-len(bad)}/{len(rows)} failures={len(bad)} report={out/'report.json'}", flush=True)
     return 1 if bad else 0
+
+
+def parse_shard(value):
+    try:
+        index, count = (int(part) for part in value.split('/'))
+        if not 1 <= count <= len(CASES) or not 0 <= index < count:
+            raise ValueError
+        return index, count
+    except ValueError:
+        raise argparse.ArgumentTypeError('shard must be INDEX/COUNT, with 0 <= INDEX < COUNT <= number of cases')
 
 
 def main():
@@ -150,8 +168,11 @@ def main():
     parser.add_argument('--native', type=Path, help='Current fork native CLI. Omit to test upstream browser WASM.')
     parser.add_argument('--out', required=True, type=Path, help='New output directory')
     parser.add_argument('--timeout', type=int, default=30)
+    parser.add_argument('--case', dest='cases', action='append', choices=CASES, help='Select a case; repeat to select several (default: all).')
+    parser.add_argument('--shard', type=parse_shard, help='Run only zero-based INDEX/COUNT of selected cases.')
     args = parser.parse_args()
     if not 1 <= args.timeout <= 120: parser.error('timeout must be between 1 and 120 seconds')
+    if args.cases and len(args.cases) != len(set(args.cases)): parser.error('duplicate case')
     try: return run(args)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         print(f'Stress test failed: {error}', file=sys.stderr); return 2
