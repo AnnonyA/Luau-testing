@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from stress_roundtrip import CASES, INPUTS, PROFILES, SEEDS, check_reference, decompile, parse_shard
+from stress_roundtrip import BASE_CASES, CASES, INPUTS, PROFILES, SEEDS, SYSTEM_CASES, check_reference, decompile, parse_shard
 
 
 class StressRoundtripTests(unittest.TestCase):
@@ -11,8 +11,8 @@ class StressRoundtripTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('stress_generator', INPUTS/'generate_cases.py')
         generator = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(generator)
-        self.assertEqual(set(CASES[:7]), set(generator.CASES))
-        for case in CASES[:7]:
+        self.assertEqual(set(BASE_CASES), set(generator.CASES))
+        for case in BASE_CASES:
             text = (INPUTS/f'{case}.luau').read_text(encoding='utf-8')
             self.assertEqual(text, generator.CASES[case]())
             self.assertGreaterEqual(len(text.splitlines()), 150)
@@ -20,12 +20,16 @@ class StressRoundtripTests(unittest.TestCase):
         spec = importlib.util.spec_from_file_location('adversarial_generator', INPUTS/'generate_adversarial.py')
         adversarial = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(adversarial)
-        self.assertEqual(CASES[7:], adversarial.case_names())
+        self.assertEqual(CASES[len(BASE_CASES):-len(SYSTEM_CASES)], adversarial.case_names())
         self.assertEqual(len(adversarial.BLOCKS), 16)
         for i, case in enumerate(adversarial.case_names()):
             text = (INPUTS/f'{case}.luau').read_text(encoding='utf-8')
             self.assertEqual(text, adversarial.make_case(i))
             self.assertGreaterEqual(len(text.splitlines()), 200)
+            self.assertEqual(text.count('local total = seed + 7'), 1)
+        for case in SYSTEM_CASES:
+            text = (INPUTS/f'{case}.luau').read_text(encoding='utf-8')
+            self.assertGreaterEqual(len(text.splitlines()), 70)
             self.assertEqual(text.count('local total = seed + 7'), 1)
         self.assertEqual(len(PROFILES), 6)
 

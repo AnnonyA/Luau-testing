@@ -19,8 +19,9 @@ from types import SimpleNamespace
 from decompiler_benchmark import observe, same_runtime
 from roadmap_v2 import ROOT, compile_source
 
-CASES = ('assignment_order', 'closures', 'constructors', 'control', 'mixed', 'packs', 'proxy') + tuple(
-    f'adversarial_{i:02}' for i in range(32))
+BASE_CASES = ('assignment_order', 'closures', 'constructors', 'control', 'mixed', 'packs', 'proxy')
+SYSTEM_CASES = ('system_graph', 'system_interpreter', 'system_parser', 'system_transactions')
+CASES = BASE_CASES + tuple(f'adversarial_{i:02}' for i in range(32)) + SYSTEM_CASES
 SEEDS = (-17, -7, -3, -1, 0, 1, 2, 5, 7, 18, 31)
 INPUTS = ROOT / 'benchmarks/stress'
 PROFILES = [(v, opt, opt) for v in (9, 12) for opt in (0, 1, 2)]
@@ -88,6 +89,7 @@ def run(args):
         cases = [case for position, case in enumerate(cases) if position % count == index]
         if not cases: raise ValueError('shard has no cases')
     for case in cases:
+        first_reference = None
         source = INPUTS/f'{case}.luau'
         for version, opt, debug in PROFILES:
             profile = f'{case}-v{version}-O{opt}-g{debug}'
@@ -101,6 +103,9 @@ def run(args):
             reference = observe(vm, input_path, driver)
             if not check_reference(reference):
                 raise RuntimeError(f'{profile}: original failed: {reference}')
+            if first_reference is not None and not same_runtime(first_reference, reference):
+                raise RuntimeError(f'{profile}: original behavior differs between compiler profiles')
+            first_reference = reference
             if (version, opt, debug) == PROFILES[0]:
                 text = source.read_text(encoding='utf-8')
                 if text.count('local total = seed + 7') != 1:
@@ -116,7 +121,7 @@ def run(args):
             result = decompile(input_path, output, stderr, native=native, timeout=args.timeout)
             row = {'case': case, 'profile': {'version': version, 'opt': opt, 'debug': debug},
                    'source_sha256': sha(source.read_bytes()), 'input_sha256': sha(raw),
-                   'input_bytes': len(raw), 'decompile': result,
+                   'input_bytes': len(raw), 'original_stdout_sha256': sha(reference['stdout'].encode()), 'decompile': result,
                    'output': str(output.relative_to(out)), 'compiled': False, 'runtime_pass': None}
             if stderr.exists(): row['error'] = stderr.read_bytes()[:4000].decode('utf-8', 'replace')
             if result['status'] == 'output':
