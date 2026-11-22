@@ -32,4 +32,10 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - run: node --test web-server/ui/studio.test.mjs scripts/test_site.mjs
+      - run: node scripts/build_site.mjs && node --test web-server/ui/studio.test.mjs scripts/test_site.mjs scripts/test_decompiler.mjs scripts/test_browser_engine.mjs scripts/test_browser_worker.mjs
+      - run: npm install --prefix "$RUNNER_TEMP/tovek-browser" --no-save --no-audit --no-fund playwright-core@1.56.1
+      - name: Test the browser decompiler
+        run: node scripts/test_browser_e2e.cjs
+        env:
+          PLAYWRIGHT_MODULE: ${{ runner.temp }}/tovek-browser/node_modules/playwright-core
+          BROWSER_EXECUTABLE: /usr/bin/google-chrome

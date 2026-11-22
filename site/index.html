@@ -12,6 +12,7 @@
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./style.css" />
     <script defer src="./site.js"></script>
+    <script type="module" src="./decompiler.mjs"></script>
   </head>
   <body>
     <header class="header">
@@ -34,8 +35,8 @@
           ></a
         >
         <nav class="nav" aria-label="Main navigation">
-          <a href="#about">The idea</a><a href="#workflow">How it works</a
-          ><a href="#roadmap">Roadmap</a>
+          <a href="#decompiler">Decompiler</a
+          ><a href="#workflow">How it works</a><a href="#roadmap">Roadmap</a>
         </nav>
         <a class="header-button" href="https://github.com/AnnonyA/Luau-testing"
           >View on GitHub <span aria-hidden="true">↗</span></a
@@ -54,8 +55,8 @@
             looking a little closer and understanding a lot more.
           </p>
           <div class="hero-actions">
-            <a class="button button-dark" href="#get-started"
-              >Get started <span aria-hidden="true">↗</span></a
+            <a class="button button-dark" href="#decompiler"
+              >Try the decompiler <span aria-hidden="true">↗</span></a
             ><a class="text-link" href="https://github.com/AnnonyA/Luau-testing"
               >Explore the source <span aria-hidden="true">↗</span></a
             >
@@ -64,7 +65,7 @@
             <span class="footnote-line"></span
             ><span
               >BUILT ON TOVEK <span class="sep">/</span> OPEN SOURCE
-              <span class="sep">/</span> RUN LOCALLY</span
+              <span class="sep">/</span> RUNS IN YOUR BROWSER</span
             >
           </div>
         </div>
@@ -167,6 +168,149 @@
           ><span>YOUR LOCAL WORKSPACE</span><span class="ticker-icon">✳</span>
         </div>
       </div>
+      <section
+        class="decompiler-section shell"
+        id="decompiler"
+        aria-labelledby="decompiler-title"
+      >
+        <div class="decompiler-intro">
+          <div>
+            <div class="eyebrow">
+              <span class="spark">✳</span> YOUR BROWSER WORKSPACE
+            </div>
+            <h2 id="decompiler-title">
+              Bytecode in.<br /><em>Clarity out.</em>
+            </h2>
+          </div>
+          <p>
+            Decompile Luau bytecode right here. Your file stays in your browser;
+            no upload or installation needed.
+          </p>
+        </div>
+        <div class="workbench">
+          <div class="workbench-head">
+            <span
+              ><span class="workbench-mark">⌘</span> Decompiler
+              <small>/ browser workspace</small></span
+            ><span class="workbench-badge"><i></i> WEBASSEMBLY</span>
+          </div>
+          <div class="workbench-grid">
+            <div class="workbench-input">
+              <div class="workbench-label">
+                01 / INPUT <span>────────</span> BYTECODE
+              </div>
+              <h3>Your file<span>.</span></h3>
+              <p>Choose a compiled Luau file or a saved base64 script.</p>
+              <input id="bytecode-file" type="file" class="sr-only" />
+              <div
+                id="file-drop"
+                class="file-drop"
+                role="button"
+                tabindex="0"
+                aria-label="Choose or drop a bytecode file"
+              >
+                <div class="drop-icon">
+                  <svg
+                    width="25"
+                    height="25"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 15V4m0 0L8 8m4-4 4 4M5 15v3a2 2 0 002 2h10a2 2 0 002-2v-3"
+                      stroke="currentColor"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+                <strong id="file-title">Drop your file here</strong
+                ><span id="file-subtitle"
+                  >or <u>choose a file</u> from your device</span
+                ><small id="file-meta"
+                  >BYTECODE / BASE64 &nbsp; · &nbsp; MAX 16 MiB</small
+                >
+              </div>
+              <div class="file-options">
+                <label for="bytecode-key"
+                  >Bytecode origin
+                  <small>Auto-detect is recommended.</small></label
+                ><select id="bytecode-key">
+                  <option value="auto">Auto-detect</option>
+                  <option value="plain">Standard Luau</option>
+                  <option value="client">Roblox client</option>
+                </select>
+              </div>
+              <button
+                type="button"
+                id="run-decompiler"
+                class="run-button"
+                disabled
+              >
+                <span>Decompile file</span><span aria-hidden="true">↗</span>
+              </button>
+              <button type="button" id="try-sample" class="sample-button">
+                No file? Try a sample <span aria-hidden="true">↗</span>
+              </button>
+              <p class="local-note">
+                <span>◇</span> Files stay on this device. Processing runs
+                locally in a Web Worker.
+              </p>
+            </div>
+            <div class="workbench-output">
+              <div class="output-heading">
+                <div>
+                  <div class="workbench-label">
+                    02 / OUTPUT <span>────────</span> LUAU
+                  </div>
+                  <h3>Your result<span>.</span></h3>
+                </div>
+                <div class="output-actions">
+                  <button type="button" id="copy-output" disabled>
+                    ▢ &nbsp; Copy</button
+                  ><button type="button" id="save-output" disabled>
+                    ↓ &nbsp; Download
+                  </button>
+                </div>
+              </div>
+              <div class="result-tab">
+                <span>◈ &nbsp; <span id="result-name">result.luau</span></span
+                ><span>LUAU</span>
+              </div>
+              <div class="result-body">
+                <div id="result-empty" class="result-empty">
+                  <span>{ }</span><strong>Your code will appear here</strong>
+                  <p>
+                    Choose a file and select “Decompile file”<br />or try the
+                    sample to get started.
+                  </p>
+                </div>
+                <pre id="result-pre" hidden><code id="result-code"></code></pre>
+              </div>
+              <div class="result-footer">
+                <span
+                  ><i></i>
+                  <span id="engine-status">WAITING FOR A FILE</span></span
+                ><span id="result-details">UTF-8 &nbsp; / &nbsp; LUAU</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p
+          class="browser-status"
+          id="browser-status"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></p>
+        <p class="engine-note">
+          Browser engine: Tovek V2.7 prebuilt WebAssembly (upstream commit
+          bd8055d). It may differ from this fork's native CLI. Your browser must
+          support WebAssembly exception handling.
+        </p>
+      </section>
       <section class="features shell" id="workflow">
         <div class="section-heading">
           <div>
@@ -183,7 +327,7 @@
         <div class="feature-grid">
           <article class="feature">
             <div class="feature-top">
-              <span>01 / UPLOAD</span><span class="feature-icon">↗</span>
+              <span>01 / CHOOSE</span><span class="feature-icon">↗</span>
             </div>
             <h3>Start with a file.</h3>
             <p>
@@ -331,9 +475,9 @@
       <div class="site-notice shell">
         <span>✳</span>
         <p>
-          <strong>A note on this site.</strong> This is a static project page,
-          not an online decompiler. GitHub Pages does not run the Tovek server.
-          Follow the steps above to use Studio locally.
+          <strong>About the browser engine.</strong> This site runs the upstream
+          Tovek WebAssembly build locally in your browser. The native server and
+          CLI use this fork's Rust source and may produce different results.
         </p>
       </div>
     </main>
