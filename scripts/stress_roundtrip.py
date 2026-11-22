@@ -37,7 +37,7 @@ def limits():
     resource.setrlimit(resource.RLIMIT_FSIZE, (8 * 1024 * 1024, 8 * 1024 * 1024))
 
 
-def decompile(input_path, output_path, stderr_path, *, native, timeout):
+def decompile(input_path, output_path, stderr_path, *, native, timeout, native_args=()):
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith('MEDAL_')}
     env['RAYON_NUM_THREADS'] = '1'
     start = time.monotonic()
@@ -48,7 +48,7 @@ def decompile(input_path, output_path, stderr_path, *, native, timeout):
                 source, dest = root/'input', root/'output'
                 source.mkdir()
                 (source/'subject.lua').write_bytes(base64.b64encode(input_path.read_bytes()))
-                command = [str(native), 'decompile-folder', str(source), str(dest), '--key', '1', '--threads', '1']
+                command = [str(native), 'decompile-folder', str(source), str(dest), '--key', '1', '--threads', '1', *native_args]
                 result_path = dest/'subject.luau'
             else:
                 command = ['node', str(ROOT/'scripts/decompile_browser_wasm.mjs'), str(input_path), 'stress.luau']
@@ -118,7 +118,8 @@ def run(args):
                 controls.append({'case': case, 'detected': detected})
                 if not detected: raise RuntimeError(f'{case}: mutation control was not detected')
             output, stderr = folder/'output.luau', folder/'stderr.txt'
-            result = decompile(input_path, output, stderr, native=native, timeout=args.timeout)
+            result = decompile(input_path, output, stderr, native=native, timeout=args.timeout,
+                               native_args=('--synthesize-fixed-loops',) if args.synthesize_fixed_loops else ())
             row = {'case': case, 'profile': {'version': version, 'opt': opt, 'debug': debug},
                    'source_sha256': sha(source.read_bytes()), 'input_sha256': sha(raw),
                    'input_bytes': len(raw), 'original_stdout_sha256': sha(reference['stdout'].encode()), 'decompile': result,
@@ -146,6 +147,7 @@ def run(args):
     report = {'schema': 'tovek-large-stress-v1', 'engine': 'native-fork' if native else 'upstream-browser-wasm-bd8055d',
               'engine_sha256': sha(native.read_bytes()) if native else sha((ROOT/'docs/assets/v26/tovek/tovek.wasm').read_bytes()),
               'compiler_sha256': sha(compiler.read_bytes()), 'vm_sha256': sha(vm.read_bytes()),
+              'native_args': ['--synthesize-fixed-loops'] if args.synthesize_fixed_loops else [],
               'compiler_revision_expected': 'c2ec0d4e5ca50796ba174a7565298f59aa572268',
               'compiler_revision_verified': False, 'cases': rows, 'mutation_controls': controls,
               'seeds': list(SEEDS),
@@ -173,11 +175,13 @@ def main():
     parser.add_argument('--native', type=Path, help='Current fork native CLI. Omit to test upstream browser WASM.')
     parser.add_argument('--out', required=True, type=Path, help='New output directory')
     parser.add_argument('--timeout', type=int, default=30)
+    parser.add_argument('--synthesize-fixed-loops', action='store_true', help='Test experimental inferred loops with --native.')
     parser.add_argument('--case', dest='cases', action='append', choices=CASES, help='Select a case; repeat to select several (default: all).')
     parser.add_argument('--shard', type=parse_shard, help='Run only zero-based INDEX/COUNT of selected cases.')
     args = parser.parse_args()
     if not 1 <= args.timeout <= 120: parser.error('timeout must be between 1 and 120 seconds')
     if args.cases and len(args.cases) != len(set(args.cases)): parser.error('duplicate case')
+    if args.synthesize_fixed_loops and not args.native: parser.error('experimental option requires --native')
     try: return run(args)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
         print(f'Stress test failed: {error}', file=sys.stderr); return 2

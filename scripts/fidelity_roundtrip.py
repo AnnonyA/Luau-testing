@@ -14,7 +14,7 @@ from source_fidelity import compare_ast, parse_ast
 from stress_roundtrip import check_reference, decompile, sha
 
 INPUTS = ROOT / 'benchmarks/fidelity'
-CASES = ('closures', 'inventory', 'records', 'tuples')
+CASES = ('closures', 'effects', 'inventory', 'records', 'tuples')
 # O0/g0 vs O0/g2 isolates debug-information changes; optimizations are separate.
 PROFILES = ((0, 0), (0, 2), (1, 2), (2, 2))
 
@@ -49,7 +49,8 @@ def run(args):
                 raise RuntimeError(f'{name}: original differs between profiles')
             reference_first = reference
             output, stderr = folder/'output.luau', folder/'stderr.txt'
-            outcome = decompile(bytecode, output, stderr, native=native, timeout=args.timeout)
+            outcome = decompile(bytecode, output, stderr, native=native, timeout=args.timeout,
+                                native_args=('--synthesize-fixed-loops',) if args.synthesize_fixed_loops else ())
             row = {'case': case, 'profile': {'version': 9, 'opt': opt, 'debug': debug},
                    'source_sha256': sha(source.read_bytes()), 'input_sha256': sha(raw),
                    'original_stdout_sha256': sha(reference['stdout'].encode()),
@@ -84,6 +85,7 @@ def run(args):
               'engine': 'native-fork' if native else 'upstream-browser-wasm-bd8055d',
               'engine_sha256': sha(native.read_bytes()) if native else sha((ROOT/'docs/assets/v26/tovek/tovek.wasm').read_bytes()),
               'compiler_sha256': sha(compiler.read_bytes()), 'vm_sha256': sha(vm.read_bytes()),
+              'native_args': ['--synthesize-fixed-loops'] if args.synthesize_fixed_loops else [],
               'parser_sha256': sha(ast.read_bytes()), 'parser_revision_expected': 'c2ec0d4e5ca50796ba174a7565298f59aa572268',
               'parser_revision_verified': False, 'cases': rows,
               'limitations': 'AST similarity is a heuristic, not semantic equivalence or proof of source recovery. '
@@ -103,8 +105,10 @@ def main():
     parser.add_argument('--native', type=Path, help='Current fork native lifter; omit for upstream browser WASM')
     parser.add_argument('--out', required=True, type=Path, help='New output directory')
     parser.add_argument('--timeout', type=int, default=30)
+    parser.add_argument('--synthesize-fixed-loops', action='store_true', help='Opt into experimental inferred loops in native output.')
     args = parser.parse_args()
     if not 1 <= args.timeout <= 120: parser.error('timeout must be 1..120')
+    if args.synthesize_fixed_loops and not args.native: parser.error('experimental option requires --native')
     try:
         return run(args)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:

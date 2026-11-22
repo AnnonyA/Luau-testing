@@ -18,6 +18,7 @@ pub fn compact_text(text: &str) -> Option<&'static str> {
             || text.ends_with(" calls inferred from this helper") => Some("inferred helper"),
         _ if text.starts_with("[DEDUP] synthesized from ") => Some("synthesized helper"),
         _ if text == crate::reroll_arithmetic::MARKER => Some("synthesized arithmetic loop"),
+        _ if text == crate::reroll_method_calls::MARKER => Some("synthesized call loop"),
         _ => None,
     }
 }

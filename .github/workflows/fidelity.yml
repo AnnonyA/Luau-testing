@@ -60,6 +60,31 @@ jobs:
           python3 scripts/fidelity_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
             --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --ast "$RUNNER_TEMP/luau-build/luau-ast" \
             --native target/fastrel/luau-lifter --out "$RUNNER_TEMP/fidelity-results"
+      - name: Run experimental fixed-loop reconstruction
+        run: |
+          python3 scripts/fidelity_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
+            --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --ast "$RUNNER_TEMP/luau-build/luau-ast" \
+            --native target/fastrel/luau-lifter --synthesize-fixed-loops --out "$RUNNER_TEMP/fidelity-synth"
+      - name: Require targeted fidelity improvement and explicit inference
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP'])
+          before = json.loads((root/'fidelity-results/report.json').read_text())
+          after = json.loads((root/'fidelity-synth/report.json').read_text())
+          def row(data, name):
+              return next(r for r in data['cases'] if r['case'] == name and r['profile']['opt'] == 2 and r['profile']['debug'] == 2)
+          a, b = row(before, 'records'), row(after, 'records')
+          old, new = a['fidelity']['style_normalized_ratio'], b['fidelity']['style_normalized_ratio']
+          if not (new > old + 0.01 and b['runtime_pass']):
+              raise SystemExit(f'No measured records improvement: {old} -> {new}')
+          for name in ('records', 'effects'):
+              text = (root/'fidelity-synth'/row(after, name)['output']).read_text()
+              if 'equivalent fixed-count call loop synthesized; original loop unknown' not in text:
+                  raise SystemExit(f'{name}: missing inference marker or no synthesized loop')
+          print(f'::notice title=Synthesized loop comparison::records O2/g2 structure {old:.6f} -> {new:.6f}; runtime passed. Loops are inferred, not verified source.')
+          PY
       - name: Summarize metrics and samples
         if: always()
         run: |
@@ -85,10 +110,16 @@ jobs:
                           text = path.read_text(encoding='utf-8', errors='replace')
                           print(f"::notice title=Output {row['case']} O{p['opt']} g{p['debug']}::{escape(text[:8000])}")
               print(f"::notice title=Fidelity metrics::{escape(chr(10).join(lines))}")
+          for case in ('records', 'effects'):
+              path = root.parent/'fidelity-synth'/f'{case}-O2-g2'/'output.luau'
+              if path.exists():
+                  print(f'::notice title=Experimental {case} O2 g2::{escape(path.read_text(errors="replace")[:8000])}')
           PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: source-fidelity-results
-          path: ${{ runner.temp }}/fidelity-results/
+          path: |
+            ${{ runner.temp }}/fidelity-results/
+            ${{ runner.temp }}/fidelity-synth/
           if-no-files-found: ignore

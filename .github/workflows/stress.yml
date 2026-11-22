@@ -56,6 +56,11 @@ jobs:
           python3 scripts/stress_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
             --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --native target/fastrel/luau-lifter \
             --out "$RUNNER_TEMP/stress-results" --timeout 30 --shard "${{ matrix.shard }}/4"
+      - name: Run experimental fixed-loop semantic round-trips
+        run: |
+          python3 scripts/stress_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
+            --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --native target/fastrel/luau-lifter \
+            --synthesize-fixed-loops --out "$RUNNER_TEMP/stress-synth-results" --timeout 30 --shard "${{ matrix.shard }}/4"
       - name: Annotate and summarize results
         if: always()
         run: |
@@ -91,10 +96,22 @@ jobs:
                           if f.exists():
                               print(f'--- {row["case"]} v{p["version"]} O{p["opt"]} {filename} (first 3000 chars) ---')
                               print(f.read_text(errors='replace')[:3000])
+          synth = Path(os.environ['RUNNER_TEMP'])/'stress-synth-results/report.json'
+          if synth.exists():
+              data = json.loads(synth.read_text())
+              passed = sum(row['runtime_pass'] is True for row in data['cases'])
+              print(f'::notice title=Experimental stress results::{passed}/{len(data["cases"])} profiles matched; {sum(c["detected"] for c in data["mutation_controls"])} controls detected.')
+              for row in data['cases']:
+                  if row['runtime_pass'] is not True:
+                      p = row['profile']
+                      msg = (row.get('compile_error') or row.get('runtime_error') or row.get('error') or row['decompile']['status']).replace('%','%25').replace('\r','%0D').replace('\n','%0A')[:800]
+                      print(f'::warning title=Experimental {row["case"]} v{p["version"]} O{p["opt"]}::{msg}')
           PY
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: native-stress-results-${{ matrix.shard }}
-          path: ${{ runner.temp }}/stress-results/
+          path: |
+            ${{ runner.temp }}/stress-results/
+            ${{ runner.temp }}/stress-synth-results/
           if-no-files-found: ignore

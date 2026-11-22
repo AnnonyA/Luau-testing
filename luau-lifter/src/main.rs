@@ -78,8 +78,8 @@ struct FolderArgs {
     /// Faster/cleaner output, but changes behavior when either operand is NaN.
     #[arg(long)]
     assume_no_nan: bool,
-    /// Synthesize equivalent fixed-count arithmetic loops (experimental; source loop unknown).
-    #[arg(long)]
+    /// Synthesize equivalent fixed-count loops (experimental; original source unknown).
+    #[arg(long, visible_alias = "synthesize-fixed-loops")]
     synthesize_arithmetic_loops: bool,
     /// Fail closed when source-like structuring cannot avoid synthetic control
     /// (the folder driver is already strict by default).
@@ -162,8 +162,8 @@ struct ValidateArgs {
     /// Default is off to preserve exact NaN semantics.
     #[arg(long)]
     assume_no_nan: bool,
-    /// Synthesize equivalent fixed-count arithmetic loops (experimental; source loop unknown).
-    #[arg(long)]
+    /// Synthesize equivalent fixed-count loops (experimental; original source unknown).
+    #[arg(long, visible_alias = "synthesize-fixed-loops")]
     synthesize_arithmetic_loops: bool,
     /// Fail closed when source-like structuring cannot avoid synthetic control
     /// (the folder driver is already strict by default).
@@ -408,7 +408,7 @@ fn run_single_file() {
             "--no-synth-helpers" => options.no_synth_helpers = true,
             "--assume-no-nan" => options.assume_no_nan = true,
             "--assume-standard-libraries" => options.assume_standard_libraries = true,
-            "--synthesize-arithmetic-loops" => options.synthesize_arithmetic_loops = true,
+            "--synthesize-arithmetic-loops" | "--synthesize-fixed-loops" => options.synthesize_arithmetic_loops = true,
             "--allow-certified-dispatcher" => {
                 options.control_flow_policy =
                     luau_lifter::ControlFlowOutputPolicy::AllowCertifiedDispatcher;
