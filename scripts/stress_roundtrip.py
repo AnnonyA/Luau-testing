@@ -6,7 +6,10 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import resource
+try:
+    import resource
+except ImportError:  # Windows has no resource module.
+    resource = None
 import subprocess
 import sys
 import tempfile
@@ -49,7 +52,7 @@ def decompile(input_path, output_path, stderr_path, *, native, timeout):
                 result_path = output_path
             with output_path.open('wb') as stdout, stderr_path.open('wb') as stderr:
                 result = subprocess.run(command, stdout=stdout, stderr=stderr, env=env, timeout=timeout,
-                                        preexec_fn=limits if native and sys.platform.startswith('linux') else None)
+                                        preexec_fn=limits if native and resource is not None and sys.platform.startswith('linux') else None)
             if native:
                 log = output_path.read_bytes()
                 with stderr_path.open('ab') as stderr: stderr.write(log)

@@ -35,3 +35,9 @@ were detected. Output often preserves generic names and expands compact source
 assignments into temporaries; this is a readability observation, not a runtime
 failure. The reports hash tools, sources and bytecode, but the runner does not
 itself verify the compiler commit. No external code is transmitted.
+
+The native CLI built from commit `969e931` also passed 28/28 profiles and all
+seven mutation controls in [GitHub Actions run 45076486459](https://github.com/AnnonyA/Luau-testing/actions/runs/45076486459).
+The output and detailed report are attached to that run as an artifact.
+Native limits use Linux resource limits; on other platforms the wall timeout
+still applies, but those OS-level limits do not.
