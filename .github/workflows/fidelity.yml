@@ -74,15 +74,17 @@ jobs:
               print('::warning::Source-fidelity report missing; inspect the failing step.')
           else:
               data = json.loads(report.read_text())
+              lines = []
               for row in data['cases']:
                   p, f = row['profile'], row['fidelity']
                   msg = f"runtime={row['runtime_pass']} status={f['status']} structure={f.get('style_normalized_ratio')} names={f.get('exact_names')}/{f.get('source_bindings')} aligned={f.get('aligned_bindings')}"
-                  print(f"::notice title={row['case']} O{p['opt']} g{p['debug']}::{escape(msg)}")
+                  lines.append(f"{row['case']} O{p['opt']} g{p['debug']}: {msg}")
                   if (p['opt'], p['debug']) == (2, 2) or (row['case'] == 'inventory' and p['opt'] == 0):
                       path = root/row['output']
                       if path.exists():
                           text = path.read_text(encoding='utf-8', errors='replace')
                           print(f"::notice title=Output {row['case']} O{p['opt']} g{p['debug']}::{escape(text[:8000])}")
+              print(f"::notice title=Fidelity metrics::{escape(chr(10).join(lines))}")
           PY
       - uses: actions/upload-artifact@v6
         if: always()
