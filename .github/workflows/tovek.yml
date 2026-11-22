@@ -32,4 +32,4 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - run: node --test web-server/ui/studio.test.mjs
+      - run: node --test web-server/ui/studio.test.mjs scripts/test_site.mjs
