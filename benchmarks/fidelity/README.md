@@ -35,7 +35,8 @@ In [native CI run 45079304528](https://github.com/AnnonyA/Luau-testing/actions/r
 the `records` O2/g2 fixture's normalized structural ratio improved from
 0.855814 to 1.0 with the option, while all 11 behavioral observations matched.
 The deliberately unrolled `effects` fixture demonstrates why this is inference
-rather than original-source recovery: it tests `__index` and a changing
-captured operand across calls. All 20 profile comparisons passed in both modes.
+rather than original-source recovery. Its initial version tested `__index` and a
+changing captured operand across calls; it now also tests early errors through
+`pcall`. The run covered 20 profile comparisons in both modes.
 The broader [native stress run 45079304458](https://github.com/AnnonyA/Luau-testing/actions/runs/45079304458)
 passed 258/258 profiles in each mode with all 43 mutation controls detected.

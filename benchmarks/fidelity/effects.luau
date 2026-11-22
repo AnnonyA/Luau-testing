@@ -10,13 +10,17 @@ return function(seed)
             log(key)
             return function(_, amount)
                 log(amount)
+                if (seed + amount) % 7 == 0 then error("controlled") end
                 seed += 1
             end
         end,
     })
-    proxy:deposit((seed + 1) % 5)
-    proxy:deposit((seed + 2) % 5)
-    proxy:deposit((seed + 3) % 5)
-    proxy:deposit((seed + 4) % 5)
+    local ok = pcall(function()
+        proxy:deposit((seed + 1) % 5)
+        proxy:deposit((seed + 2) % 5)
+        proxy:deposit((seed + 3) % 5)
+        proxy:deposit((seed + 4) % 5)
+    end)
+    log(ok)
     return seed, table.concat(history, ","), nil, #history
 end

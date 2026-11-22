@@ -142,6 +142,20 @@ mod tests {
         }
     }
     #[test]
+    fn refuses_invalid_modulus_and_more_than_eight_calls() {
+        let (receiver, operand) = locals();
+        for modulus in [0.0, -1.0, f64::NAN, f64::INFINITY, 2.5] {
+            let mut block = Block((1..=4).map(|i| call(&receiver, &operand, "deposit", i as f64, modulus)).collect());
+            let expected = block.to_string();
+            reroll_method_calls(&mut block);
+            assert_eq!(block.to_string(), expected);
+        }
+        let mut block = Block((1..=9).map(|i| call(&receiver, &operand, "deposit", i as f64, 5.0)).collect());
+        let expected = block.to_string();
+        reroll_method_calls(&mut block);
+        assert_eq!(block.to_string(), expected);
+    }
+    #[test]
     fn induction_variable_does_not_shadow_an_existing_binding() {
         let (receiver, _) = locals();
         let operand = RcLocal::new(Local::new(Some("tovekIndex".into())));
