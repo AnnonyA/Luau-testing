@@ -38,6 +38,16 @@ The [project site](https://annonya.github.io/Luau-testing/) runs Tovek in a Web 
 
 To preview the site locally, run `node scripts/build_site.mjs` and serve `dist/site` with a static HTTP server. The Pages workflow builds the site and includes the checked-in engine and sample when it deploys from `main`.
 
+## Competitive benchmark
+
+A small original source, its compiled bytecode, the browser output, and the local observation are in `benchmarks/competitive/`. To reproduce the comparison, build `luau-compile` and `scripts/benchmark_vm` using Luau commit `c2ec0d4e5ca50796ba174a7565298f59aa572268`, then run:
+
+```sh
+python3 scripts/competitive_compare.py --compiler /path/to/luau-compile --vm /path/to/benchmark-vm --out out/competitive --online
+```
+
+`--online` sends **only the public fixture bytecode** to Luacid and lua.expert. Omit it for an offline run; add `--native target/release/luau-lifter` to compare this fork's native build too. The command preserves raw responses and checks recompilation and sandboxed execution. One fixture is not enough to rank decompilers; never send private code to third-party APIs.
+
 ## Roadmap
 
 - [x] Single-file web interface with copy and download.

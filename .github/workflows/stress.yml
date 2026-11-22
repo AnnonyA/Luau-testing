@@ -1,0 +1,80 @@
+name: Large Luau semantic stress
+
+on:
+  push:
+    branches: ['arena/**']
+    paths:
+      - 'benchmarks/stress/**'
+      - 'scripts/stress_roundtrip.py'
+      - 'scripts/test_stress_roundtrip.py'
+      - 'ast/**'
+      - 'cfg/**'
+      - 'restructure/**'
+      - 'luau-lifter/**'
+      - '.github/workflows/stress.yml'
+  pull_request:
+    paths:
+      - 'benchmarks/stress/**'
+      - 'scripts/stress_roundtrip.py'
+      - 'scripts/test_stress_roundtrip.py'
+      - 'ast/**'
+      - 'cfg/**'
+      - 'restructure/**'
+      - 'luau-lifter/**'
+      - '.github/workflows/stress.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stress:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly-2026-06-15
+      - uses: Swatinem/rust-cache@v2
+      - name: Build native decompiler from this branch
+        run: cargo build --profile fastrel -p luau-lifter
+      - name: Build pinned Luau compiler and sandbox VM
+        run: |
+          git clone https://github.com/luau-lang/luau.git "$RUNNER_TEMP/luau"
+          git -C "$RUNNER_TEMP/luau" checkout --quiet c2ec0d4e5ca50796ba174a7565298f59aa572268
+          cmake -S "$RUNNER_TEMP/luau" -B "$RUNNER_TEMP/luau-build" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/luau-build" --target Luau.Compile.CLI --parallel 2
+          cmake -S scripts/benchmark_vm -B "$RUNNER_TEMP/benchmark-vm" -DLUAU_SOURCE_DIR="$RUNNER_TEMP/luau" -DCMAKE_BUILD_TYPE=Release
+          cmake --build "$RUNNER_TEMP/benchmark-vm" --parallel 2
+      - name: Run bounded native semantic round-trips
+        run: |
+          python3 scripts/stress_roundtrip.py --compiler "$RUNNER_TEMP/luau-build/luau-compile" \
+            --vm "$RUNNER_TEMP/benchmark-vm/benchmark-vm" --native target/fastrel/luau-lifter \
+            --out "$RUNNER_TEMP/stress-results" --timeout 30
+      - name: Annotate and summarize results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = Path(os.environ['RUNNER_TEMP'])/'stress-results/report.json'
+          if not report.exists():
+              print('::warning title=Stress results::No report was generated; inspect the job failure.')
+          else:
+              data = json.loads(report.read_text())
+              rows = data['cases']
+              passed = sum(row['runtime_pass'] is True for row in rows)
+              print(f'::notice title=Native stress results::{passed}/{len(rows)} profiles matched the original; {sum(c["detected"] for c in data["mutation_controls"])} mutation controls detected.')
+              for row in rows:
+                  if row['runtime_pass'] is not True:
+                      p = row['profile']
+                      msg = (row.get('error') or row.get('compile_error') or row.get('runtime_error') or row['decompile']['status']).replace('%','%25').replace('\r','%0D').replace('\n','%0A')[:800]
+                      print(f'::warning title={row["case"]} v{p["version"]} O{p["opt"]} g{p["debug"]}::{msg}')
+          PY
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: native-stress-results
+          path: ${{ runner.temp }}/stress-results/
+          if-no-files-found: ignore
