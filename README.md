@@ -18,6 +18,11 @@ For the CLI:
 cargo run --release -p luau-lifter -- --help
 ```
 
+The native CLI supports the experimental `--synthesize-fixed-loops` option (also
+available as `--synthesize-arithmetic-loops`). It emits clearly labelled inferred
+loops for a few verified patterns; these are not claims about the original source.
+See [`benchmarks/fidelity/`](benchmarks/fidelity/) for source-similarity and semantic tests.
+
 The server also provides `POST /decompile/raw` (binary bytecode), `POST /decompile` (base64), and `POST /decompile/batch`. Luau clients are in the repository root.
 
 ## Tests

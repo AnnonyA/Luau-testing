@@ -70,6 +70,22 @@ print('finished')
             self.assertEqual((root/'out').read_text(), 'return 42')
             self.assertIn('finished', (root/'err').read_text())
 
+    def test_native_invocation_forwards_experimental_flag(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            script = root/'lifter'
+            script.write_text("""#!/usr/bin/env python3
+import pathlib, sys
+assert sys.argv[4:] == ['--key', '1', '--threads', '1', '--synthesize-fixed-loops']
+out = pathlib.Path(sys.argv[3]); out.mkdir()
+(out/'subject.luau').write_text('return 42')
+""")
+            script.chmod(0o755)
+            data = root/'input'; data.write_bytes(b'\x09payload')
+            outcome = decompile(data, root/'out', root/'err', native=script, timeout=2,
+                                native_args=('--synthesize-fixed-loops',))
+            self.assertEqual(outcome['status'], 'output')
+
     def test_native_decompiler_failures_are_not_reported_as_outputs(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
